@@ -6,7 +6,7 @@ import com.second.hand.trading.server.service.UserService;
 import com.second.hand.trading.server.vo.PageVo;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.Resource;
+import jakarta.annotation.Resource;
 import java.util.List;
 
 /**

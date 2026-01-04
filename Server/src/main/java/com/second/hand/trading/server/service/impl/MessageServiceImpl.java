@@ -9,7 +9,7 @@ import com.second.hand.trading.server.model.UserModel;
 import com.second.hand.trading.server.service.MessageService;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.Resource;
+import jakarta.annotation.Resource;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;

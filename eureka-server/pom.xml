@@ -5,8 +5,9 @@
         <groupId>com.second.hand.trading</groupId>
         <artifactId>sht</artifactId>
         <version>1.0-SNAPSHOT</version>
+        <relativePath>../pom.xml</relativePath>
     </parent>
-    <artifactId>eurekaServer</artifactId>
+    <artifactId>eureka-server</artifactId>
 
     <dependencies>
         <dependency>

@@ -5,7 +5,7 @@ import com.second.hand.trading.server.model.OrderAddressModel;
 import com.second.hand.trading.server.service.OrderAddressService;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.Resource;
+import jakarta.annotation.Resource;
 
 /**
  * @author myl

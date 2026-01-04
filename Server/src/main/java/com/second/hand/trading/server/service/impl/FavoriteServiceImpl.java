@@ -8,7 +8,7 @@ import com.second.hand.trading.server.model.OrderModel;
 import com.second.hand.trading.server.service.FavoriteService;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.Resource;
+import jakarta.annotation.Resource;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;

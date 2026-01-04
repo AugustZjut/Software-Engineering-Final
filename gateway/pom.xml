@@ -4,21 +4,18 @@
       <groupId>com.second.hand.trading</groupId>
       <artifactId>sht</artifactId>
       <version>1.0-SNAPSHOT</version>
+      <relativePath>../pom.xml</relativePath>
   </parent>
-  <artifactId>serviceZuul</artifactId>
+  <artifactId>api-gateway</artifactId>
   
       <dependencies>
         <dependency>
             <groupId>org.springframework.cloud</groupId>
-            <artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-web</artifactId>
+            <artifactId>spring-cloud-starter-gateway</artifactId>
         </dependency>
         <dependency>
             <groupId>org.springframework.cloud</groupId>
-            <artifactId>spring-cloud-starter-netflix-zuul</artifactId>
+            <artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
         </dependency>
     </dependencies>
 </project>
