@@ -16,12 +16,14 @@
                     <el-col :span="6" v-for="(idle,index) in idleList">
                         <div class="idle-card" @click="toDetails(idle)">
                             <el-image
-                                    style="width: 100%; height: 160px"
-                                    :src="idle.imgUrl"
-                                    fit="contain">
-                                <div slot="error" class="image-slot">
-                                    <i class="el-icon-picture-outline">无图</i>
-                                </div>
+                                :src="idle.imgUrl"
+                                style="width: 100%; height: 160px"
+                                fit="contain">
+                                <template #error>
+                                    <div class="image-slot">
+                                        <i class="el-icon-picture-outline">无图</i>
+                                    </div>
+                                </template>
                             </el-image>
                             <div class="idle-title">
                                 {{idle.idleName}}
@@ -40,9 +42,11 @@
                                         style="width: 30px; height: 30px"
                                         :src="idle.user.avatar"
                                         fit="contain">
-                                    <div slot="error" class="image-slot">
-                                        <i class="el-icon-picture-outline">无图</i>
-                                    </div>
+                                    <template #error>
+                                        <div class="image-slot">
+                                            <i class="el-icon-picture-outline">无图</i>
+                                        </div>
+                                    </template>
                                 </el-image>
                                 <div class="user-nickname">{{idle.user.nickname}}</div>
                             </div>
@@ -54,7 +58,7 @@
                 <el-pagination
                         background
                         @current-change="handleCurrentChange"
-                        :current-page.sync="currentPage"
+                        v-model:current-page="currentPage"
                         :page-size="8"
                         layout="prev, pager, next, jumper"
                         :total="totalItem">
@@ -105,7 +109,7 @@
                 const loading = this.$loading({
                     lock: true,
                     text: '加载数据中',
-                    spinner: 'el-icon-loading',
+                    // spinner: 'el-icon-loading',
                     background: 'rgba(0, 0, 0, 0)'
                 });
                 if(this.labelName>0){

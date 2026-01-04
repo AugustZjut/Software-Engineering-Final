@@ -34,7 +34,7 @@
                     label="订单状态"
                     width="100"
                     show-overflow-tooltip>
-                <template slot-scope="scope">
+                <template #default="scope">
                     <div>{{orderStatus[scope.row.orderStatus]}}</div>
                 </template>
             </el-table-column>
@@ -43,7 +43,7 @@
                     width="100"
                     show-overflow-tooltip
                     class="cell el-tooltip">
-                <template slot-scope="scope">
+                <template #default="scope">
                     <div>{{paymentStatus[scope.row.paymentStatus]}}</div>
                 </template>
             </el-table-column>
@@ -59,7 +59,7 @@
                     show-overflow-tooltip>
             </el-table-column>
             <el-table-column label="操作">
-                <template slot-scope="scope">
+                <template #default="scope">
                     <el-button
                             size="mini"
                             type="danger"
@@ -70,7 +70,7 @@
         <div class="block">
             <el-pagination
                     @current-change="handleCurrentChange"
-                    :current-page.sync="nowPage"
+                    v-model:current-page="nowPage"
                     :page-size="8"
                     background
                     layout="prev, pager, next,jumper"

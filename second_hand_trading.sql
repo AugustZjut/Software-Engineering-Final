@@ -2,7 +2,8 @@
 SQLyog Ultimate v11.33 (64 bit)
 MySQL - 8.0.18 : Database - second_hand_trading
 *********************************************************************
-*/
+*/
+
 
 /*!40101 SET NAMES utf8 */;
 

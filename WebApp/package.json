@@ -1,23 +1,24 @@
 {
-  "name": "second-hand-trading",
-  "version": "4.2.0",
+  "name": "second-hand-trading-web",
   "private": true,
+  "version": "0.0.0",
+  "type": "module",
   "scripts": {
-    "dev": "npm run serve",
-    "serve": "vue-cli-service serve",
-    "build": "vue-cli-service build"
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
   },
   "dependencies": {
-    "axios": "^0.18.0",
-    "element-ui": "^2.11.0",
-    "vue": "^2.6.10",
-    "vue-router": "^3.0.3",
-    "jquery": "^3.4.1",
-    "babel-polyfill": "^6.26.0"
+    "vue": "^3.5.24",
+    "element-plus": "^2.9.0",
+    "vue-router": "^4.5.0",
+    "axios": "^1.7.0",
+    "jquery": "^3.7.0"
   },
   "devDependencies": {
-    "@vue/cli-plugin-babel": "^3.9.0",
-    "@vue/cli-service": "^3.9.0",
-    "vue-template-compiler": "^2.6.10"
+    "@vitejs/plugin-vue": "^6.0.1",
+    "vite": "^7.2.4",
+    "sass": "^1.80.0",
+    "@element-plus/icons-vue": "^2.3.0"
   }
 }

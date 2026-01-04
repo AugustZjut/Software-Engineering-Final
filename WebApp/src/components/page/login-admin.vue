@@ -5,13 +5,13 @@
                 <div class="login-title">后台管理</div>
                 <el-form ref="form" :model="userForm">
                     <el-input placeholder="请输入管理员账号" v-model="userForm.accountNumber" class="login-input">
-                        <template slot="prepend">
+                        <template #prepend>
                             <div class="el-icon-user-solid"></div>
                         </template>
                     </el-input>
                     <el-input placeholder="请输入管理员密码" v-model="userForm.adminPassword" class="login-input"
                               @keyup.enter.native="login"  show-password>
-                        <template slot="prepend">
+                        <template #prepend>
                             <div class="el-icon-lock"></div>
                         </template>
                     </el-input>

@@ -34,7 +34,7 @@
                     width="100">
             </el-table-column>
             <el-table-column label="操作">
-                <template slot-scope="scope">
+                <template #default="scope">
                     <el-button
                             size="mini"
                             type="danger"
@@ -72,7 +72,7 @@
                     width="100">
             </el-table-column>
             <el-table-column label="操作">
-                <template slot-scope="scope">
+                <template #default="scope">
                     <el-button
                             size="mini"
                             type="danger"
@@ -83,7 +83,7 @@
         <div class="block">
             <el-pagination
                     @current-change="handleCurrentChange"
-                    :current-page.sync="nowPage"
+                    v-model:current-page="nowPage"
                     :page-size="8"
                     background
                     layout="prev, pager, next,jumper"

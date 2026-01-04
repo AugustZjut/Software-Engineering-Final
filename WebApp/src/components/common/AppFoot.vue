@@ -1,7 +1,5 @@
 <template>
-    <div class="foot-container">
-        <div class="author">二手交易平台 <a target="_blank" href="https://github.com/MYvLiang/second-hand-trading">@MYvLiang</a></div>
-    </div>
+    <div class="foot-container"></div>
 </template>
 
 <script>

@@ -6,29 +6,39 @@
             </div>
             <div class="search-container">
                 <el-input placeholder="搜闲置..." v-model="searchValue" @keyup.enter.native="searchIdle">
-                    <el-button slot="append" icon="el-icon-search" @click="searchIdle"></el-button>
+                    <template #append><el-button icon="el-icon-search" @click="searchIdle"></el-button></template>
                 </el-input>
             </div>
-            <el-button type="primary" icon="el-icon-plus"  @click="toRelease">发布闲置</el-button>
-            <el-button type="primary" icon="el-icon-chat-dot-round" @click="toMessage">消息</el-button>
+            <el-button type="primary" @click="toRelease">
+            <el-icon><Plus /></el-icon>
+            <span>发布闲置</span>
+            </el-button>
+            <el-button type="primary" @click="toMessage">
+            <el-icon><ChatDotRound /></el-icon>
+            <span>消息</span>
+            </el-button>
             <router-link v-if="!isLogin" class="user-name-text" to="/login">登录</router-link>
             <el-dropdown trigger="click" v-else>
                 <div style="cursor:pointer;display: flex;align-items: center;">
                     <div style="font-size: 16px;color: #409EFF;padding-right: 5px;">{{nicknameValue?nicknameValue:nickname}}</div>
                     <el-avatar :src="avatarValue?avatarValue:avatar"></el-avatar>
                 </div>
-                <el-dropdown-menu slot="dropdown">
+                <template #dropdown>
+                    <el-dropdown-menu>
                     <el-dropdown-item><div @click="toMe">个人中心</div></el-dropdown-item>
                     <el-dropdown-item divided style="color: red;"><div @click="loginOut">退出登录</div></el-dropdown-item>
-                </el-dropdown-menu>
+                    </el-dropdown-menu>
+                </template>
             </el-dropdown>
         </div>
     </div>
 </template>
 <script>
+    import { Plus, ChatDotRound } from '@element-plus/icons-vue';
 
     export default {
         name: 'Header',
+        components: { Plus, ChatDotRound },
         props: ['searchInput','nicknameValue','avatarValue'],
         data() {
             return {

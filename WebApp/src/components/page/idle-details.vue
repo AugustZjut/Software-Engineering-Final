@@ -26,9 +26,7 @@
 
                 <div class="details-info">
                     <div class="details-info-title">{{idleItemInfo.idleName}}</div>
-                    <div class="details-info-main" v-html="idleItemInfo.idleDetails">
-                        {{idleItemInfo.idleDetails}}
-                    </div>
+                    <div class="details-info-main" v-html="idleItemInfo.idleDetails"></div>
                     <div class="details-picture">
                         <el-image v-for="(imgUrl,i) in idleItemInfo.pictureList"
                                   style="width: 90%;margin-bottom: 2px;"
@@ -67,7 +65,7 @@
                                         {{mes.toU.nickname?' @'+mes.toU.nickname+'：'+
                                         mes.toM.content.substring(0,10)+
                                         (mes.toM.content.length>10?'...':''):''}}</div>
-                                    <div class="message-content" v-html="mes.content">{{mes.content}}</div>
+                                    <div class="message-content" v-html="mes.content"></div>
                                     <div class="message-time">{{mes.createTime}}</div>
                                 </div>
                             </div>

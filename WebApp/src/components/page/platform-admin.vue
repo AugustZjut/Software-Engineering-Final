@@ -29,11 +29,11 @@
                                 </el-menu-item>
                                 <el-menu-item index="2">
                                     <i class="el-icon-s-goods"></i>
-                                    <span slot="title">订单管理</span>
+                                    <template #title><span>订单管理</span></template>
                                 </el-menu-item>
                                 <el-menu-item index="3" >
                                     <i class="el-icon-s-custom"></i>
-                                    <span slot="title">用户管理</span>
+                                    <template #title><span>用户管理</span></template>
                                 </el-menu-item>
                             </el-menu>
                         </el-col>

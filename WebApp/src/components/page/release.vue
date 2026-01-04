@@ -43,7 +43,7 @@
                         </div>
                         <div style="width: 300px;">
                             <el-input-number v-model="idleItemInfo.idlePrice" :precision="2" :step="10" :max="10000000">
-                                <div slot="prepend">价格</div>
+                                <template #prepend>价格</template>
                             </el-input-number>
                         </div>
 
@@ -51,7 +51,7 @@
                     <div class="release-idle-container-picture">
                         <div class="release-idle-container-picture-title">上传闲置照片</div>
                         <el-upload
-                                action="http://localhost:8080/file/"
+                                action="http://localhost:8040/api/file"
                                 :on-preview="fileHandlePreview"
                                 :on-remove="fileHandleRemove"
                                 :on-success="fileHandleSuccess"
@@ -69,7 +69,7 @@
                                       v-for="(img,index) in imgList" :src="img"
                                       :preview-src-list="imgList"></el-image>
                         </div>
-                        <el-dialog :visible.sync="imgDialogVisible">
+                        <el-dialog v-model="imgDialogVisible">
                             <img width="100%" :src="dialogImageUrl" alt="">
                         </el-dialog>
                     </div>
@@ -132,8 +132,10 @@
         },
         methods: {
             handleChange(value) {
-                console.log(value);
-                this.idleItemInfo.idlePlace=value[1];
+                const municipalities = ['北京市', '天津市', '上海市', '重庆市'];
+                this.idleItemInfo.idlePlace = municipalities.includes(value[0])
+                    ? value[0]
+                    : (value[1] || value[0]);
             },
             fileHandleRemove(file, fileList) {
                 console.log(file, fileList);

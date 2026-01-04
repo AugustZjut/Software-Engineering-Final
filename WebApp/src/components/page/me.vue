@@ -27,16 +27,18 @@
                             <el-dialog
                                     @close="finishEdit"
                                     title="编辑个人信息"
-                                    :visible.sync="userInfoDialogVisible"
+                                    v-model="userInfoDialogVisible"
                                     width="400px">
                                 <div class="edit-tip">昵称</div>
                                 <el-input
                                         v-model="userInfo.nickname"
                                         :disabled="notUserNicknameEdit"
                                         @change="saveUserNickname">
-                                    <el-button slot="append" type="warning" icon="el-icon-edit"
-                                               @click="notUserNicknameEdit = false">编辑
-                                    </el-button>
+                                    <template #append>
+                                        <el-button type="warning" icon="el-icon-edit"
+                                                @click="notUserNicknameEdit = false">编辑
+                                        </el-button>
+                                    </template>
                                 </el-input>
 
                                 <div v-if="userPasswordEdit">
@@ -55,14 +57,18 @@
                                             value="123456"
                                             :disabled="true"
                                             show-password>
-                                        <el-button slot="append" type="warning" icon="el-icon-edit"
-                                                   @click="userPasswordEdit = true">编辑
-                                        </el-button>
+                                        <template #append>
+                                            <el-button type="warning" icon="el-icon-edit"
+                                                    @click="userPasswordEdit = true">编辑
+                                            </el-button>
+                                        </template>
                                     </el-input>
                                 </div>
-                                <span slot="footer" class="dialog-footer">
-                                <el-button @click="userInfoDialogVisible=false">完成</el-button>
-                            </span>
+                                <template #footer>
+                                    <span class="dialog-footer">
+                                        <el-button @click="userInfoDialogVisible=false">完成</el-button>
+                                    </span>
+                                </template>
                             </el-dialog>
                         </div>
                     </div>
@@ -85,24 +91,24 @@
                                         style="width: 100px; height: 100px;"
                                         :src="item.imgUrl"
                                         fit="cover">
-                                    <div slot="error" class="image-slot">
-                                        <i class="el-icon-picture-outline">无图</i>
-                                    </div>
+                                    <template #error>
+                                        <div class="image-slot">
+                                            <i class="el-icon-picture-outline">无图</i>
+                                        </div>
+                                    </template>
                                 </el-image>
                                 <div class="idle-container-list-item-text">
                                     <div class="idle-container-list-title">
                                         {{item.idleName}}
                                     </div>
-                                    <div class="idle-container-list-idle-details" v-html="item.idleDetails">
-                                        {{item.idleDetails}}
-                                    </div>
+                                    <div class="idle-container-list-idle-details" v-html="item.idleDetails"></div>
                                     <div class="idle-container-list-idle-time">{{item.timeStr}}</div>
 
                                     <div class="idle-item-foot">
                                         <div class="idle-prive">￥{{item.idlePrice}}
                                             {{(activeName==='4'||activeName==='5')?orderStatus[item.orderStatus]:''}}
                                         </div>
-                                        <el-button v-if="activeName!=='4'&&activeName!=='5'" type="danger" size="mini" slot="reference"
+                                        <el-button v-if="activeName!=='4'&&activeName!=='5'" type="danger" size="mini" 
                                                    plain @click.stop="handle(activeName,item,index)">{{handleName[activeName-1]}}
                                         </el-button>
                                     </div>
@@ -120,13 +126,13 @@
                     <div class="address-container-add-item">
                         <el-input placeholder="请输入收货人姓名" v-model="addressInfo.consigneeName" maxlength="10"
                                   show-word-limit>
-                            <div slot="prepend">收货人姓名</div>
+                            <template #prepend>收货人姓名</template>
                         </el-input>
                     </div>
                     <div class="address-container-add-item">
                         <el-input placeholder="请输入收货人手机号" v-model="addressInfo.consigneePhone"
                                   onkeyup="this.value=this.value.replace(/[^\d.]/g,'');" maxlength="11" show-word-limit>
-                            <div slot="prepend">手机号</div>
+                            <template #prepend>手机号</template>
                         </el-input>
                     </div>
 
@@ -143,7 +149,7 @@
                     <div class="address-container-add-item">
                         <el-input placeholder="请输入详细地址（如道路、门牌号、小区、楼栋号等信息）" v-model="addressInfo.detailAddress"
                                   maxlength="50" show-word-limit>
-                            <div slot="prepend">详细地址</div>
+                            <template #prepend>详细地址</template>
                         </el-input>
                     </div>
                     <el-checkbox v-model="addressInfo.defaultFlag">设置为默认地址</el-checkbox>
@@ -171,7 +177,7 @@
                                 width="270">
                         </el-table-column>
                         <el-table-column label="操作">
-                            <template slot-scope="scope">
+                            <template #default="scope">
                                 <el-button
                                         size="mini"
                                         @click="handleEdit(scope.$index, scope.row)">编辑
@@ -184,7 +190,7 @@
                             </template>
                         </el-table-column>
                         <el-table-column label="是否默认地址" width="110">
-                            <template slot-scope="scope">
+                            <template #default="scope">
                                 <el-button v-if="!scope.row.defaultFlag"
                                            size="mini"
                                            @click="handleSetDefault(scope.$index, scope.row)">设为默认

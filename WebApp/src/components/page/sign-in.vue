@@ -4,22 +4,22 @@
             <div class="sign-in-body">
                 <div class="sign-in-title">注册</div>
                 <el-input placeholder="请输入昵称..." maxlength="30"  v-model="userInfo.nickname" class="sign-in-input" clearable>
-                    <template slot="prepend">
+                    <template #prepend>
                         <div class="el-icon-user-solid"></div>
                     </template>
                 </el-input>
                 <el-input placeholder="请输入手机号..." maxlength="11" v-model="userInfo.accountNumber" class="sign-in-input" clearable>
-                    <template slot="prepend">
+                    <template #prepend>
                         <div class="el-icon-phone"></div>
                     </template>
                 </el-input>
                 <el-input placeholder="请输入密码..." show-password maxlength="16" v-model="userInfo.userPassword" class="sign-in-input" clearable>
-                    <template slot="prepend">
+                    <template #prepend>
                         <div class="el-icon-lock"></div>
                     </template>
                 </el-input>
                 <el-input placeholder="请再次输入密码..." show-password maxlength="16" v-model="userPassword2" @keyup.enter.native="signIn" class="sign-in-input" clearable>
-                    <template slot="prepend">
+                    <template #prepend>
                         <div class="el-icon-lock"></div>
                     </template>
                 </el-input>

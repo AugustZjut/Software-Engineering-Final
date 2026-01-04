@@ -20,9 +20,11 @@
                     <el-input v-model="adminPassword" minlength="8" placeholder="请输入管理员密码" style="padding: 10px 0" show-password required></el-input>
                     <span style="margin-left: 10px">确认管理员密码</span>
                     <el-input v-model="adminRePassword" minlength="10" placeholder="请再次输入管理员密码" style="padding: 10px 0" show-password required></el-input>
-                    <span slot="footer" class="dialog-footer">
-                        <el-button type="primary" @click="regAdmin">添加</el-button>
-                    </span>
+                    <template #footer>
+                        <span class="dialog-footer">
+                            <el-button type="primary" @click="regAdmin">添加</el-button>
+                        </span>
+                    </template>
                 </el-dialog>
             </div>
         </el-menu>
@@ -31,7 +33,7 @@
                   stripe
                   style="width: 100%;color: #5a5c61;">
             <el-table-column label="头像" width="50">
-                <template slot-scope="scope">
+                <template #default="scope">
                     <el-avatar shape="square" :size="23" :src="scope.row.avatar"></el-avatar>
                 </template>
             </el-table-column>
@@ -56,7 +58,7 @@
                     width="200">
             </el-table-column>
             <el-table-column label="操作">
-                <template slot-scope="scope">
+                <template #default="scope">
                     <el-button
                             size="mini"
                             type="danger"
@@ -71,7 +73,7 @@
             <el-table-column
                     label="头像"
                     width="50">
-                <template slot-scope="scope">
+                <template #default="scope">
                     <el-avatar shape="square" :size="23" :src="scope.row.avatar"></el-avatar>
                 </template>
             </el-table-column>
@@ -96,7 +98,7 @@
                     width="200">
             </el-table-column>
             <el-table-column label="操作">
-                <template slot-scope="scope">
+                <template #default="scope">
                     <el-button
                             size="mini"
                             type="success"
@@ -123,7 +125,7 @@
         <div class="block">
             <el-pagination
                     @current-change="handleCurrentChange"
-                    :current-page.sync="nowPage"
+                    v-model:current-page="nowPage"
                     :page-size="7"
                     background
                     layout="prev, pager, next,jumper"

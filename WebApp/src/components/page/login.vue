@@ -5,13 +5,13 @@
                 <div class="login-title" @click="toIndex">二手交易平台</div>
                 <el-form ref="form" :model="userForm">
                     <el-input placeholder="请输入手机号..." v-model="userForm.accountNumber" class="login-input">
-                        <template slot="prepend">
+                        <template #prepend>
                             <div class="el-icon-user-solid"></div>
                         </template>
                     </el-input>
                     <el-input placeholder="请输入密码..." v-model="userForm.userPassword" class="login-input"
                               @keyup.enter.native="login"  show-password>
-                        <template slot="prepend">
+                        <template #prepend>
                             <div class="el-icon-lock"></div>
                         </template>
                     </el-input>

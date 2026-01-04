@@ -12,9 +12,11 @@
                                         style="width: 100%; height: 160px"
                                         :src="idle.imgUrl"
                                         fit="contain">
-                                    <div slot="error" class="image-slot">
-                                        <i class="el-icon-picture-outline">无图</i>
-                                    </div>
+                                    <template #error>
+                                        <div class="image-slot">
+                                            <i class="el-icon-picture-outline">无图</i>
+                                        </div>
+                                    </template>
                                 </el-image>
                                 <div class="idle-title">
                                     {{idle.idleName}}
@@ -33,9 +35,11 @@
                                             style="width: 30px; height: 30px"
                                             :src="idle.user.avatar"
                                             fit="contain">
-                                        <div slot="error" class="image-slot">
+                                    <template #error>
+                                        <div class="image-slot">
                                             <i class="el-icon-picture-outline">无图</i>
                                         </div>
+                                    </template>
                                     </el-image>
                                     <div class="user-nickname">{{idle.user.nickname}}</div>
                                 </div>
@@ -47,7 +51,7 @@
                     <el-pagination
                             background
                             @current-change="handleCurrentChange"
-                            :current-page.sync="currentPage"
+                            v-model:current-page="currentPage"
                             :page-size="8"
                             layout="prev, pager, next, jumper"
                             :total="totalItem">

@@ -19,7 +19,7 @@
                 </div>
                 <el-dialog
                         title="选择地址"
-                        :visible.sync="addressDialogVisible"
+                        v-model="addressDialogVisible"
                         width="800px">
                     <el-table
                             stripe
@@ -41,7 +41,7 @@
                                 label="地址">
                         </el-table-column>
                         <el-table-column label=" " width="120">
-                            <template slot-scope="scope">
+                            <template #default="scope">
                                 <el-button
                                         size="mini"
                                         @click="selectAddress(scope.$index, scope.row)">选择
