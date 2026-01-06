@@ -14,11 +14,12 @@
                             <div class="details-header-user-info-time">{{idleItemInfo.user.signInTime.substring(0,10)}} 加入平台</div>
                         </div>
                     </div>
-                    <div class="details-header-buy" :style="'width:'+(isMaster?'150px;':'280px;')">
+                    <div class="details-header-buy" :style="detailsHeaderStyle">
                         <div style="color: red;font-size: 18px;font-weight: 600;">￥{{idleItemInfo.idlePrice}}</div>
                         <div v-if="!isMaster&&idleItemInfo.idleStatus!==1" style="color: red;font-size: 16px;">闲置已下架或删除</div>
                         <el-button v-if="!isMaster&&idleItemInfo.idleStatus===1" type="danger" plain @click="buyButton(idleItemInfo)">立即购买</el-button>
                         <el-button v-if="!isMaster&&idleItemInfo.idleStatus===1" type="primary" plain @click="favoriteButton(idleItemInfo)">{{isFavorite?'取消收藏':'收藏'}}</el-button>
+                        <el-button v-if="!isMaster&&idleItemInfo.idleStatus===1" type="success" @click="contactSeller">联系卖家</el-button>
                         <el-button v-if="isMaster&&idleItemInfo.idleStatus===1" type="danger" @click="changeStatus(idleItemInfo,2)" plain>下架</el-button>
                         <el-button v-if="isMaster&&idleItemInfo.idleStatus===2" type="primary" @click="changeStatus(idleItemInfo,1)" plain>重新上架</el-button>
                     </div>
@@ -92,6 +93,23 @@
             AppHead,
             AppBody,
             AppFoot
+        },
+        computed: {
+            detailsHeaderStyle() {
+                if (this.isMaster) {
+                    return {
+                        width: '150px'
+                    };
+                }
+                if (this.idleItemInfo && this.idleItemInfo.idleStatus === 1) {
+                    return {
+                        width: '420px'
+                    };
+                }
+                return {
+                    width: '280px'
+                };
+            }
         },
         data() {
             return {
@@ -262,6 +280,34 @@
                     })
                 }
             },
+            contactSeller(){
+                const sellerId = this.idleItemInfo && this.idleItemInfo.userId ? Number(this.idleItemInfo.userId) : null;
+                if(!sellerId){
+                    this.$message.error('未找到卖家信息');
+                    return;
+                }
+                const currentId = this.getCookie('shUserId');
+                if(!currentId){
+                    this.$message.warning('请先登录后再联系卖家');
+                    this.$router.push({
+                        path: '/login',
+                        query: {
+                            redirect: this.$route.fullPath
+                        }
+                    });
+                    return;
+                }
+                if(Number(currentId) === sellerId){
+                    return;
+                }
+                this.$router.push({
+                    path: '/chat',
+                    query: {
+                        targetId: sellerId,
+                        idleId: this.idleItemInfo.id
+                    }
+                });
+            },
             cancelReply(){
                 this.isReply=false;
                 this.toUser=this.idleItemInfo.userId;
@@ -341,9 +387,9 @@
     .details-header-buy {
         display: flex;
         align-items: center;
-        justify-content: space-between;
+        justify-content: flex-start;
+        gap: 12px;
         height: 50px;
-        width: 280px;
     }
 
     .details-info {

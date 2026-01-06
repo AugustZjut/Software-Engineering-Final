@@ -49,16 +49,31 @@
                             @send="handleSend">
                         </chat-input>
                     </template>
+                    <template v-else-if="pendingView">
+                        <div class="chat-content-header">
+                            <div class="chat-peer-name">{{ pendingPeerName }}</div>
+                            <div class="chat-peer-desc">{{ pendingHeaderDesc }}</div>
+                        </div>
+                        <chat-context-bar
+                            :idle="pendingContextIdle"
+                            @view-detail="viewIdleDetail">
+                        </chat-context-bar>
+                        <chat-message-list
+                            :messages="pendingMessages"
+                            :current-user-id="currentUserId"
+                            :loading="pendingLoading"
+                            :can-load-more="false">
+                        </chat-message-list>
+                        <chat-input
+                            v-model="messageDraft"
+                            :sending="sendingMessage"
+                            @send="handleSend">
+                        </chat-input>
+                    </template>
                     <template v-else>
                         <div class="chat-empty-state">
-                            <div class="chat-empty-title">{{ pendingTarget ? '准备发起新会话' : '请选择一个会话' }}</div>
+                            <div class="chat-empty-title">请选择一个会话</div>
                             <div class="chat-empty-subtitle">从列表中选择已有会话，或在商品详情页点击“联系卖家”开始聊天。</div>
-                            <chat-input
-                                v-if="pendingTarget"
-                                v-model="messageDraft"
-                                :sending="sendingMessage"
-                                @send="handleSend">
-                            </chat-input>
                         </div>
                     </template>
                 </div>
@@ -92,7 +107,11 @@ export default {
             sendingMessage: false,
             messageDraft: '',
             canLoadMore: false,
-            pendingTarget: null
+            pendingTarget: null,
+            pendingIdle: null,
+            pendingSeller: null,
+            pendingMessages: [],
+            pendingLoading: false
         };
     },
     computed: {
@@ -120,6 +139,27 @@ export default {
         },
         unreadTotal() {
             return this.$chatState.unreadTotal || 0;
+        },
+        pendingView() {
+            return !!(this.pendingTarget && !this.activeConversation);
+        },
+        pendingPeerName() {
+            if (this.pendingSeller && this.pendingSeller.nickname) {
+                return this.pendingSeller.nickname;
+            }
+            if (!this.pendingTarget) {
+                return '';
+            }
+            return `用户 ${this.pendingTarget.targetId}`;
+        },
+        pendingHeaderDesc() {
+            if (this.pendingIdle && this.pendingIdle.idleName) {
+                return `咨询闲置：${this.pendingIdle.idleName}`;
+            }
+            return '发送首条消息即可建立会话';
+        },
+        pendingContextIdle() {
+            return this.pendingIdle || null;
         }
     },
     watch: {
@@ -186,8 +226,10 @@ export default {
             if (!conversation || conversation.id === this.activeConversationId) {
                 return;
             }
-            this.pendingTarget = null;
+            this.resetPendingState();
+            this.$chatStore.preparePendingConversation(null);
             this.$chatStore.setActiveConversationId(conversation.id);
+            this.updateChatRoute({ conversationId: conversation.id });
         },
         async handleSend() {
             const content = (this.messageDraft || '').trim();
@@ -211,9 +253,11 @@ export default {
                 });
                 this.messageDraft = '';
                 if (message && message.conversationId) {
-                    this.pendingTarget = null;
+                    this.resetPendingState();
+                    this.$chatStore.preparePendingConversation(null);
                     this.$chatStore.setActiveConversationId(message.conversationId);
                     await this.$chatStore.markConversationRead(message.conversationId);
+                    this.updateChatRoute({ conversationId: message.conversationId });
                 }
             } catch (error) {
                 this.$message.error('发送失败，请稍后重试');
@@ -289,15 +333,55 @@ export default {
             if (this.pendingTarget && this.pendingTarget.idleId) {
                 return Number(this.pendingTarget.idleId);
             }
+            if (this.pendingIdle && this.pendingIdle.id) {
+                return this.pendingIdle.id;
+            }
             return null;
         },
-        handleRouteParams() {
-            const { targetId, idleId, productId } = this.$route.query;
+        async handleRouteParams() {
+            const query = this.$route.query || {};
+            const { targetId } = query;
+            const idleSource = query.idleId ?? query.productId ?? null;
+
+            const { conversationId } = query;
+
+            if (!targetId && conversationId) {
+                const numericConversationId = Number(conversationId);
+                const match = this.conversations.find(item => item && item.id === numericConversationId) || null;
+                if (match) {
+                    this.resetPendingState();
+                    this.$chatStore.preparePendingConversation(null);
+                    this.$chatStore.setActiveConversationId(match.id);
+                    this.updateChatRoute({ conversationId: match.id });
+                    return;
+                }
+            }
+
             if (!targetId) {
+                this.resetPendingState();
+                this.$chatStore.preparePendingConversation(null);
+                if (!conversationId) {
+                    this.updateChatRoute();
+                }
                 return;
             }
+
             const numericTarget = Number(targetId);
-            const numericIdle = Number(idleId || productId);
+            if (!Number.isFinite(numericTarget) || numericTarget <= 0) {
+                this.resetPendingState();
+                this.$chatStore.preparePendingConversation(null);
+                this.updateChatRoute();
+                return;
+            }
+
+            let normalizedIdle = null;
+            if (idleSource !== null && idleSource !== undefined && idleSource !== '') {
+                const idleNumber = Number(idleSource);
+                if (Number.isFinite(idleNumber) && idleNumber > 0) {
+                    normalizedIdle = idleNumber;
+                }
+            }
+
             const existing = this.conversations.find(item => {
                 if (!item) {
                     return false;
@@ -306,26 +390,161 @@ export default {
                 if (peerId !== numericTarget) {
                     return false;
                 }
-                if (numericIdle && item.idleId) {
-                    return Number(item.idleId) === numericIdle;
+                if (normalizedIdle && item.idleId) {
+                    return Number(item.idleId) === normalizedIdle;
                 }
                 return true;
             });
-            if (existing) {
-                this.pendingTarget = null;
+
+            if (existing && existing.id) {
+                this.resetPendingState();
+                this.$chatStore.preparePendingConversation(null);
                 this.$chatStore.setActiveConversationId(existing.id);
+                this.updateChatRoute({ conversationId: existing.id });
                 return;
             }
+
+            this.$chatStore.setActiveConversationId(null);
+            this.canLoadMore = false;
+
             this.pendingTarget = {
                 targetId: numericTarget,
-                idleId: numericIdle || null
+                idleId: normalizedIdle
             };
+            this.pendingIdle = null;
+            this.pendingSeller = null;
+            this.pendingMessages = [];
+            this.pendingLoading = true;
+            this.$chatStore.preparePendingConversation(numericTarget, normalizedIdle);
+            await this.loadPendingContext(numericTarget, normalizedIdle);
         },
         viewIdleDetail(id) {
             if (!id) {
                 return;
             }
             this.$router.push({ path: '/details', query: { id } });
+        },
+        async loadPendingContext(targetId, idleId) {
+            try {
+                let idleData = null;
+                let sellerData = null;
+                if (idleId) {
+                    const res = await this.$api.getIdleItem({ id: idleId });
+                    if (res && res.status_code === 1 && res.data) {
+                        idleData = res.data;
+                        if (res.data.user) {
+                            sellerData = res.data.user;
+                        }
+                    }
+                }
+                if (!sellerData) {
+                    sellerData = this.findUserFromConversations(targetId);
+                }
+                if (!this.pendingTarget || this.pendingTarget.targetId !== targetId) {
+                    return;
+                }
+                this.pendingIdle = idleData;
+                this.pendingSeller = sellerData;
+                this.pendingMessages = this.buildPendingIntroMessages();
+            } catch (error) {
+                console.error('loadPendingContext error', error);
+                if (this.pendingTarget && this.pendingTarget.targetId === targetId) {
+                    this.pendingIdle = null;
+                    this.pendingSeller = null;
+                    this.pendingMessages = this.buildPendingIntroMessages();
+                }
+            } finally {
+                if (this.pendingTarget && this.pendingTarget.targetId === targetId) {
+                    this.pendingLoading = false;
+                }
+            }
+        },
+        findUserFromConversations(userId) {
+            const match = this.conversations.find(item => {
+                if (!item) {
+                    return false;
+                }
+                if (item.userA && item.userA.id === userId) {
+                    return true;
+                }
+                if (item.userB && item.userB.id === userId) {
+                    return true;
+                }
+                return false;
+            });
+            if (!match) {
+                return null;
+            }
+            if (match.userA && match.userA.id === userId) {
+                return match.userA;
+            }
+            if (match.userB && match.userB.id === userId) {
+                return match.userB;
+            }
+            return null;
+        },
+        buildPendingIntroMessages() {
+            const name = this.pendingIdle && this.pendingIdle.idleName ? this.pendingIdle.idleName : '';
+            const content = name
+                ? `你正在咨询闲置《${name}》，发送首条消息开始聊天。`
+                : '发送首条消息开始与对方沟通。';
+            return [
+                {
+                    id: 'pending-intro',
+                    senderId: 0,
+                    sender: {
+                        avatar: '',
+                        nickname: '系统提示'
+                    },
+                    content,
+                    sendTime: new Date().toISOString()
+                }
+            ];
+        },
+        resetPendingState() {
+            this.pendingTarget = null;
+            this.pendingIdle = null;
+            this.pendingSeller = null;
+            this.pendingMessages = [];
+            this.pendingLoading = false;
+        },
+        updateChatRoute(query) {
+            const normalized = {};
+            if (query) {
+                Object.keys(query).forEach(key => {
+                    const value = query[key];
+                    if (value !== null && value !== undefined && value !== '') {
+                        normalized[key] = String(value);
+                    }
+                });
+            }
+            const current = this.$route.query || {};
+            const currentKeys = Object.keys(current);
+            const normalizedKeys = Object.keys(normalized);
+            let identical = currentKeys.length === normalizedKeys.length;
+            if (identical) {
+                for (const key of normalizedKeys) {
+                    if (current[key] !== normalized[key]) {
+                        identical = false;
+                        break;
+                    }
+                }
+                if (identical) {
+                    for (const key of currentKeys) {
+                        if (!normalizedKeys.includes(key)) {
+                            identical = false;
+                            break;
+                        }
+                    }
+                }
+            }
+            if (identical) {
+                return;
+            }
+            this.$router.replace({
+                path: '/chat',
+                query: normalized
+            });
         }
     }
 };

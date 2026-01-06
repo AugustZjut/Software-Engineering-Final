@@ -31,7 +31,8 @@ const chatState = reactive({
     messages: {},
     activeConversationId: null,
     unreadTotal: 0,
-    currentUserId: null
+    currentUserId: null,
+    pendingHint: null
 });
 
 const chatStore = {
@@ -44,6 +45,7 @@ const chatStore = {
     setActiveConversationId(id) {
         chatState.activeConversationId = id;
     },
+    preparePendingConversation,
     reset: resetChatState
 };
 
@@ -177,6 +179,7 @@ function computeUnread(conversations) {
 function updateConversations(conversations) {
     chatState.conversations = Array.isArray(conversations) ? conversations : [];
     chatState.unreadTotal = computeUnread(chatState.conversations);
+    tryResolvePendingConversation();
 }
 
 async function fetchConversations() {
@@ -226,6 +229,7 @@ async function sendMessage(payload) {
             appendMessage(res.data.conversationId, res.data);
             markConversationReadLocal(res.data.conversationId);
             fetchConversations();
+            chatState.pendingHint = null;
             return res.data;
         }
         return Promise.reject(res);
@@ -309,6 +313,18 @@ function connectIfNeeded() {
     connectChat();
 }
 
+function preparePendingConversation(targetId, idleId) {
+    if (!targetId) {
+        chatState.pendingHint = null;
+        return;
+    }
+    chatState.pendingHint = {
+        targetId: Number(targetId),
+        idleId: idleId ? Number(idleId) : null
+    };
+    tryResolvePendingConversation();
+}
+
 function resetChatState() {
     chatState.currentUserId = null;
     if (chatState.reconnectTimer) {
@@ -329,6 +345,7 @@ function resetChatState() {
     chatState.messages = {};
     chatState.activeConversationId = null;
     chatState.unreadTotal = 0;
+    chatState.pendingHint = null;
 }
 
 watch(() => globalData.userInfo && globalData.userInfo.id, (newVal) => {
@@ -341,3 +358,27 @@ watch(() => globalData.userInfo && globalData.userInfo.id, (newVal) => {
         resetChatState();
     }
 }, { immediate: true });
+
+function tryResolvePendingConversation() {
+    const hint = chatState.pendingHint;
+    if (!hint || !Array.isArray(chatState.conversations) || !chatState.currentUserId) {
+        return;
+    }
+    const match = chatState.conversations.find(item => {
+        if (!item) {
+            return false;
+        }
+        const peerId = item.userAId === chatState.currentUserId ? item.userBId : item.userAId;
+        if (peerId !== hint.targetId) {
+            return false;
+        }
+        if (hint.idleId && item.idleId) {
+            return Number(item.idleId) === hint.idleId;
+        }
+        return true;
+    });
+    if (match && match.id) {
+        chatState.activeConversationId = match.id;
+        chatState.pendingHint = null;
+    }
+}
