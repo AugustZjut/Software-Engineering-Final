@@ -41,12 +41,17 @@
                             :current-user-id="currentUserId"
                             :loading="loadingMessages"
                             :can-load-more="canLoadMore"
-                            @load-more="loadMoreMessages">
+                            @load-more="loadMoreMessages"
+                            @view-idle="handleViewIdle"
+                            @view-order="handleViewOrder">
                         </chat-message-list>
                         <chat-input
                             v-model="messageDraft"
                             :sending="sendingMessage"
-                            @send="handleSend">
+                            @send="handleSend"
+                            @send-image="handleSendImage"
+                            @send-product="handleSendProduct"
+                            @send-order="handleSendOrder">
                         </chat-input>
                     </template>
                     <template v-else-if="pendingView">
@@ -62,12 +67,17 @@
                             :messages="pendingMessages"
                             :current-user-id="currentUserId"
                             :loading="pendingLoading"
-                            :can-load-more="false">
+                            :can-load-more="false"
+                            @view-idle="handleViewIdle"
+                            @view-order="handleViewOrder">
                         </chat-message-list>
                         <chat-input
                             v-model="messageDraft"
                             :sending="sendingMessage"
-                            @send="handleSend">
+                            @send="handleSend"
+                            @send-image="handleSendImage"
+                            @send-product="handleSendProduct"
+                            @send-order="handleSendOrder">
                         </chat-input>
                     </template>
                     <template v-else>
@@ -252,18 +262,55 @@ export default {
                     extraPayload: null
                 });
                 this.messageDraft = '';
-                if (message && message.conversationId) {
-                    this.resetPendingState();
-                    this.$chatStore.preparePendingConversation(null);
-                    this.$chatStore.setActiveConversationId(message.conversationId);
-                    await this.$chatStore.markConversationRead(message.conversationId);
-                    this.updateChatRoute({ conversationId: message.conversationId });
-                }
+                await this.afterSendSuccess(message);
             } catch (error) {
                 this.$message.error('发送失败，请稍后重试');
             } finally {
                 this.sendingMessage = false;
             }
+        },
+        async handleSendImage(payload) {
+            const receiverId = this.resolveReceiverId();
+            if (!receiverId) {
+                this.$message.warning('请选择聊天对象');
+                return;
+            }
+            const url = payload && payload.url ? payload.url : '';
+            if (!url) {
+                this.$message.error('上传图片失败');
+                return;
+            }
+            this.sendingMessage = true;
+            try {
+                const message = await this.$chatStore.sendMessage({
+                    receiverId,
+                    idleId: this.resolveIdleId(),
+                    messageType: 1,
+                    content: url,
+                    extraPayload: { url }
+                });
+                await this.afterSendSuccess(message);
+            } catch (error) {
+                this.$message.error('图片发送失败，请稍后重试');
+            } finally {
+                this.sendingMessage = false;
+            }
+        },
+        handleSendProduct() {
+            this.$message.info('商品卡片发送功能开发中');
+        },
+        handleSendOrder() {
+            this.$message.info('订单消息功能开发中');
+        },
+        async afterSendSuccess(message) {
+            if (!message || !message.conversationId) {
+                return;
+            }
+            this.resetPendingState();
+            this.$chatStore.preparePendingConversation(null);
+            this.$chatStore.setActiveConversationId(message.conversationId);
+            await this.$chatStore.markConversationRead(message.conversationId);
+            this.updateChatRoute({ conversationId: message.conversationId });
         },
         resolvePeerName(conversation) {
             if (!conversation) {
@@ -423,6 +470,18 @@ export default {
                 return;
             }
             this.$router.push({ path: '/details', query: { id } });
+        },
+        handleViewIdle(id) {
+            if (!id) {
+                return;
+            }
+            this.viewIdleDetail(id);
+        },
+        handleViewOrder(orderId) {
+            if (!orderId) {
+                return;
+            }
+            this.$router.push({ path: '/order', query: { id: orderId } });
         },
         async loadPendingContext(targetId, idleId) {
             try {

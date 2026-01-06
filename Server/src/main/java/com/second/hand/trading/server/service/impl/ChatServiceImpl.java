@@ -1,6 +1,8 @@
 package com.second.hand.trading.server.service.impl;
 
 import com.alibaba.fastjson2.JSON;
+import com.alibaba.fastjson2.JSONArray;
+import com.alibaba.fastjson2.JSONObject;
 import com.second.hand.trading.server.Exception.ParamException;
 import com.second.hand.trading.server.dao.ChatConversationDao;
 import com.second.hand.trading.server.dao.ChatMessageDao;
@@ -11,6 +13,7 @@ import com.second.hand.trading.server.model.ChatMessageModel;
 import com.second.hand.trading.server.model.IdleItemModel;
 import com.second.hand.trading.server.model.UserModel;
 import com.second.hand.trading.server.service.ChatService;
+import com.second.hand.trading.server.enums.ChatMessageType;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
@@ -56,13 +59,16 @@ public class ChatServiceImpl implements ChatService {
                                         Integer messageType,
                                         String content,
                                         String extraPayload) {
-        int normalizedType = validateSendParameters(senderId, receiverId, messageType, content);
-        long bindIdleId = idleId == null ? 0L : idleId;
+        ChatMessageType type = validateSendParameters(senderId, receiverId, messageType, content, extraPayload, idleId);
+        PayloadNormalization payloadNormalization = normalizeExtraPayload(type, extraPayload, idleId);
+        long bindIdleId = resolveIdleId(payloadNormalization.getResolvedIdleId(), idleId);
         ConversationKey key = ConversationKey.of(senderId, receiverId, bindIdleId);
         ChatConversationModel conversation = chatConversationDao.selectByPair(key.userAId, key.userBId, key.idleId);
         Date now = currentDate();
+        String normalizedExtra = payloadNormalization.getPayload();
+        String normalizedContent = normalizeContent(type, content, normalizedExtra);
         String contextSnapshot = ensureContextSnapshot(bindIdleId, conversation);
-        String preview = buildPreview(normalizedType, content);
+        String preview = buildPreview(type, normalizedContent, normalizedExtra);
         if (conversation == null) {
             ChatConversationModel toCreate = new ChatConversationModel();
             toCreate.setUserAId(key.userAId);
@@ -95,9 +101,9 @@ public class ChatServiceImpl implements ChatService {
         message.setSenderId(senderId);
         message.setReceiverId(receiverId);
         message.setIdleId(bindIdleId == 0 ? null : bindIdleId);
-        message.setMessageType(normalizedType);
-        message.setContent(content);
-        message.setExtraPayload(extraPayload);
+        message.setMessageType(type.getCode());
+        message.setContent(normalizedContent);
+        message.setExtraPayload(normalizedExtra);
         message.setSendTime(now);
         chatMessageDao.insertSelective(message);
         hydrateUsers(Collections.singletonList(message));
@@ -173,21 +179,32 @@ public class ChatServiceImpl implements ChatService {
         chatMessageDao.markAsRead(conversationId, userId, now);
     }
 
-    private int validateSendParameters(Long senderId,
-                                       Long receiverId,
-                                       Integer messageType,
-                                       String content) {
+    private ChatMessageType validateSendParameters(Long senderId,
+                                                   Long receiverId,
+                                                   Integer messageType,
+                                                   String content,
+                                                   String extraPayload,
+                                                   Long idleId) {
         if (senderId == null || receiverId == null) {
             throw new ParamException(buildError("userId", "用户不能为空"));
         }
         if (Objects.equals(senderId, receiverId)) {
             throw new ParamException(buildError("receiverId", "不能给自己发送消息"));
         }
-        int normalizedType = messageType == null ? 0 : messageType;
-        if (normalizedType == 0 && !StringUtils.hasText(content)) {
+        ChatMessageType type = ChatMessageType.fromCode(messageType);
+        if (type == ChatMessageType.TEXT && !StringUtils.hasText(content)) {
             throw new ParamException(buildError("content", "消息内容不能为空"));
         }
-        return normalizedType;
+        if (type == ChatMessageType.IMAGE && !StringUtils.hasText(extraPayload)) {
+            throw new ParamException(buildError("extraPayload", "图片地址不能为空"));
+        }
+        if (type == ChatMessageType.PRODUCT_CARD && (idleId == null || idleId <= 0) && !StringUtils.hasText(extraPayload)) {
+            throw new ParamException(buildError("idleId", "请选择要分享的闲置"));
+        }
+        if (type == ChatMessageType.SYSTEM && !StringUtils.hasText(extraPayload) && !StringUtils.hasText(content)) {
+            throw new ParamException(buildError("extraPayload", "系统消息内容不能为空"));
+        }
+        return type;
     }
 
     private String ensureContextSnapshot(long idleId, ChatConversationModel conversation) {
@@ -266,17 +283,148 @@ public class ChatServiceImpl implements ChatService {
         return Math.max(value, 0);
     }
 
-    private String buildPreview(Integer messageType, String content) {
-        if (messageType == null || messageType == 0) {
+    private PayloadNormalization normalizeExtraPayload(ChatMessageType type,
+                                                       String extraPayload,
+                                                       Long idleId) {
+        if (type == ChatMessageType.TEXT) {
+            return PayloadNormalization.of(nullIfBlank(extraPayload), idleId);
+        }
+        if (type == ChatMessageType.IMAGE) {
+            JSONObject payload = parseJsonObject(extraPayload, "extraPayload");
+            String url = payload.getString("url");
+            if (!StringUtils.hasText(url)) {
+                throw new ParamException(buildError("extraPayload", "图片地址不能为空"));
+            }
+            return PayloadNormalization.of(payload.toJSONString(), idleId);
+        }
+        if (type == ChatMessageType.PRODUCT_CARD) {
+            return buildProductCardPayload(idleId, extraPayload);
+        }
+        if (type == ChatMessageType.SYSTEM) {
+            JSONObject payload = parseJsonObject(extraPayload, "extraPayload");
+            if (!StringUtils.hasText(payload.getString("title"))
+                    && !StringUtils.hasText(payload.getString("description"))
+                    && !StringUtils.hasText(payload.getString("message"))) {
+                throw new ParamException(buildError("extraPayload", "系统消息内容不能为空"));
+            }
+            return PayloadNormalization.of(payload.toJSONString(), idleId);
+        }
+        return PayloadNormalization.of(nullIfBlank(extraPayload), idleId);
+    }
+
+    private long resolveIdleId(Long payloadIdleId, Long requestIdleId) {
+        Long effective = payloadIdleId != null ? payloadIdleId : requestIdleId;
+        return effective == null ? 0L : Math.max(effective, 0L);
+    }
+
+    private String normalizeContent(ChatMessageType type, String content, String extraPayload) {
+        if (type == ChatMessageType.TEXT) {
+            return content == null ? "" : content.trim();
+        }
+        if (StringUtils.hasText(content)) {
+            return content.trim();
+        }
+        if (type == ChatMessageType.SYSTEM && StringUtils.hasText(extraPayload)) {
+            try {
+                JSONObject payload = JSON.parseObject(extraPayload);
+                String description = payload.getString("description");
+                if (StringUtils.hasText(description)) {
+                    return description;
+                }
+                String title = payload.getString("title");
+                if (StringUtils.hasText(title)) {
+                    return title;
+                }
+            } catch (Exception ignored) {
+                // ignore parsing errors for fallback content
+            }
+        }
+        return "";
+    }
+
+    private JSONObject parseJsonObject(String json, String field) {
+        if (!StringUtils.hasText(json)) {
+            throw new ParamException(buildError(field, "参数不能为空"));
+        }
+        try {
+            return JSON.parseObject(json);
+        } catch (Exception ex) {
+            throw new ParamException(buildError(field, "JSON格式不正确"));
+        }
+    }
+
+    private PayloadNormalization buildProductCardPayload(Long idleId, String extraPayload) {
+        JSONObject payload = StringUtils.hasText(extraPayload) ? parseJsonObject(extraPayload, "extraPayload") : new JSONObject();
+        Long resolvedIdleId = payload.getLong("idleId");
+        if (resolvedIdleId == null || resolvedIdleId <= 0) {
+            resolvedIdleId = idleId;
+        }
+        if (resolvedIdleId == null || resolvedIdleId <= 0) {
+            throw new ParamException(buildError("idleId", "商品信息不能为空"));
+        }
+        IdleItemModel idleItem = idleItemDao.selectByPrimaryKey(resolvedIdleId);
+        if (idleItem == null) {
+            throw new ParamException(buildError("idleId", "闲置不存在"));
+        }
+        JSONObject snapshot = new JSONObject();
+        snapshot.put("idleId", idleItem.getId());
+        snapshot.put("idleName", idleItem.getIdleName());
+        snapshot.put("idlePrice", extractPrice(idleItem.getIdlePrice()));
+        snapshot.put("picture", extractCoverPicture(idleItem.getPictureList()));
+        snapshot.put("idleStatus", idleItem.getIdleStatus());
+        snapshot.put("sellerId", idleItem.getUserId());
+        return PayloadNormalization.of(snapshot.toJSONString(), resolvedIdleId);
+    }
+
+    private String extractCoverPicture(String pictures) {
+        if (!StringUtils.hasText(pictures)) {
+            return null;
+        }
+        try {
+            JSONArray array = JSON.parseArray(pictures);
+            if (array == null || array.isEmpty()) {
+                return null;
+            }
+            Object first = array.get(0);
+            return first == null ? null : String.valueOf(first);
+        } catch (Exception ex) {
+            return null;
+        }
+    }
+
+    private String buildPreview(ChatMessageType type, String content, String extraPayload) {
+        if (type == ChatMessageType.TEXT) {
             return abbreviate(content, 100);
         }
-        if (messageType == 1) {
+        if (type == ChatMessageType.IMAGE) {
             return "[图片]";
         }
-        if (messageType == 2) {
+        if (type == ChatMessageType.PRODUCT_CARD) {
+            return "[商品卡片]";
+        }
+        if (type == ChatMessageType.SYSTEM) {
+            if (StringUtils.hasText(extraPayload)) {
+                try {
+                    JSONObject payload = JSON.parseObject(extraPayload);
+                    String title = payload.getString("title");
+                    if (StringUtils.hasText(title)) {
+                        return abbreviate(title, 60);
+                    }
+                    String systemType = payload.getString("systemType");
+                    if (StringUtils.hasText(systemType)) {
+                        return "[" + systemType + "]";
+                    }
+                } catch (Exception ignored) {
+                    return "[系统消息]";
+                }
+            }
             return "[系统消息]";
         }
         return "[消息]";
+    }
+
+    private String nullIfBlank(String value) {
+        return StringUtils.hasText(value) ? value : null;
     }
 
     private String abbreviate(String value, int max) {
@@ -294,6 +442,28 @@ public class ChatServiceImpl implements ChatService {
             return null;
         }
         return price.stripTrailingZeros().toPlainString();
+    }
+
+    private static final class PayloadNormalization {
+        private final String payload;
+        private final Long resolvedIdleId;
+
+        private PayloadNormalization(String payload, Long resolvedIdleId) {
+            this.payload = payload;
+            this.resolvedIdleId = resolvedIdleId;
+        }
+
+        static PayloadNormalization of(String payload, Long resolvedIdleId) {
+            return new PayloadNormalization(payload, resolvedIdleId);
+        }
+
+        String getPayload() {
+            return payload;
+        }
+
+        Long getResolvedIdleId() {
+            return resolvedIdleId;
+        }
     }
 
     private static class ConversationKey {

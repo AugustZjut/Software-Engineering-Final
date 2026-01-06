@@ -11,7 +11,53 @@
                 size="small">
             </el-avatar>
             <div class="chat-message-bubble">
-                <div class="chat-message-content" v-text="message.content"></div>
+                <div class="chat-message-content">
+                    <template v-if="message.messageType === 0">
+                        <div class="chat-message-text" v-text="message.content"></div>
+                    </template>
+                    <template v-else-if="message.messageType === 1">
+                        <el-image
+                            class="chat-message-image"
+                            :src="resolveImageSrc(message)"
+                            fit="cover"
+                            :preview-src-list="resolveImagePreview(message)">
+                        </el-image>
+                    </template>
+                    <template v-else-if="message.messageType === 2">
+                        <div class="chat-message-product">
+                            <el-image
+                                class="chat-message-product-cover"
+                                :src="resolveProductCover(message)"
+                                fit="cover"
+                                :preview-src-list="resolveProductPreview(message)">
+                            </el-image>
+                            <div class="chat-message-product-info">
+                                <div class="chat-message-product-title">{{ resolveProductTitle(message) }}</div>
+                                <div class="chat-message-product-price" v-if="resolveProductPrice(message)">
+                                    ￥{{ resolveProductPrice(message) }}
+                                </div>
+                                <el-button type="primary" text size="small" @click="emitViewIdle(message)">查看商品</el-button>
+                            </div>
+                        </div>
+                    </template>
+                    <template v-else-if="message.messageType === 3">
+                        <div class="chat-message-system">
+                            <div class="chat-message-system-title">{{ resolveSystemTitle(message) }}</div>
+                            <div class="chat-message-system-body">{{ resolveSystemBody(message) }}</div>
+                            <el-button
+                                v-if="resolveSystemOrderId(message)"
+                                type="primary"
+                                text
+                                size="small"
+                                @click="emitViewOrder(resolveSystemOrderId(message))">
+                                查看订单
+                            </el-button>
+                        </div>
+                    </template>
+                    <template v-else>
+                        <div class="chat-message-text" v-text="message.content"></div>
+                    </template>
+                </div>
                 <div class="chat-message-time">{{ formatTime(message.sendTime) }}</div>
             </div>
         </div>
@@ -39,7 +85,7 @@ export default {
             default: false
         }
     },
-    emits: ['load-more'],
+    emits: ['load-more', 'view-idle', 'view-order'],
     data() {
         return {
             autoScroll: true
@@ -94,6 +140,77 @@ export default {
                 return `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')} ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
             } catch (e) {
                 return '';
+            }
+        },
+        resolveExtra(message) {
+            if (!message || !message.extraPayloadObject) {
+                return {};
+            }
+            return message.extraPayloadObject;
+        },
+        resolveImageSrc(message) {
+            const extra = this.resolveExtra(message);
+            if (extra && extra.url) {
+                return extra.url;
+            }
+            return message && message.content ? message.content : '';
+        },
+        resolveImagePreview(message) {
+            const src = this.resolveImageSrc(message);
+            return src ? [src] : [];
+        },
+        resolveProductCover(message) {
+            const extra = this.resolveExtra(message);
+            return extra && extra.picture ? extra.picture : '';
+        },
+        resolveProductPreview(message) {
+            const cover = this.resolveProductCover(message);
+            return cover ? [cover] : [];
+        },
+        resolveProductTitle(message) {
+            const extra = this.resolveExtra(message);
+            return extra && extra.idleName ? extra.idleName : '闲置信息';
+        },
+        resolveProductPrice(message) {
+            const extra = this.resolveExtra(message);
+            return extra && extra.idlePrice ? extra.idlePrice : '';
+        },
+        emitViewIdle(message) {
+            const extra = this.resolveExtra(message);
+            if (extra && extra.idleId) {
+                this.$emit('view-idle', extra.idleId);
+            }
+        },
+        resolveSystemTitle(message) {
+            const extra = this.resolveExtra(message);
+            if (extra && extra.title) {
+                return extra.title;
+            }
+            if (extra && extra.systemType) {
+                return extra.systemType;
+            }
+            return '系统消息';
+        },
+        resolveSystemBody(message) {
+            const extra = this.resolveExtra(message);
+            if (extra && extra.description) {
+                return extra.description;
+            }
+            if (extra && extra.message) {
+                return extra.message;
+            }
+            if (message && message.content) {
+                return message.content;
+            }
+            return '';
+        },
+        resolveSystemOrderId(message) {
+            const extra = this.resolveExtra(message);
+            return extra && extra.orderId ? extra.orderId : null;
+        },
+        emitViewOrder(orderId) {
+            if (orderId) {
+                this.$emit('view-order', orderId);
             }
         }
     }
@@ -153,6 +270,74 @@ export default {
     white-space: pre-wrap;
     word-break: break-word;
     font-size: 14px;
+}
+
+.chat-message-text {
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+.chat-message-image {
+    width: 180px;
+    max-height: 220px;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.chat-message-product {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.chat-message-product-cover {
+    width: 72px;
+    height: 72px;
+    border-radius: 6px;
+    background: #f5f7fa;
+}
+
+.chat-message-product-info {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    max-width: 200px;
+}
+
+.chat-message-product-title {
+    font-weight: 600;
+    color: inherit;
+}
+
+.chat-message-product-price {
+    color: #f56c6c;
+    font-weight: 600;
+}
+
+.chat-message-system {
+    background: rgba(64, 158, 255, 0.12);
+    border-radius: 6px;
+    padding: 8px 10px;
+    color: #303133;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    max-width: 260px;
+}
+
+.chat-message-row.from-self .chat-message-system {
+    background: rgba(255, 255, 255, 0.2);
+    color: #ffffff;
+}
+
+.chat-message-system-title {
+    font-weight: 600;
+}
+
+.chat-message-system-body {
+    font-size: 13px;
+    line-height: 1.5;
+    white-space: pre-wrap;
 }
 
 .chat-message-time {

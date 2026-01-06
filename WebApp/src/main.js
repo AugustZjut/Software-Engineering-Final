@@ -207,7 +207,7 @@ async function fetchMessages(conversationId, anchorId) {
             anchorId
         });
         if (res.status_code === 1) {
-            const list = res.data || [];
+            const list = Array.isArray(res.data) ? res.data.map(enhanceMessage) : [];
             if (anchorId) {
                 const existing = chatState.messages[conversationId] || [];
                 chatState.messages[conversationId] = [...list, ...existing];
@@ -224,13 +224,21 @@ async function fetchMessages(conversationId, anchorId) {
 
 async function sendMessage(payload) {
     try {
-        const res = await api.sendChatMessage(payload);
+        const requestPayload = { ...payload };
+        if (requestPayload.messageType === undefined || requestPayload.messageType === null) {
+            requestPayload.messageType = 0;
+        }
+        if (requestPayload.extraPayload && typeof requestPayload.extraPayload !== 'string') {
+            requestPayload.extraPayload = JSON.stringify(requestPayload.extraPayload);
+        }
+        const res = await api.sendChatMessage(requestPayload);
         if (res.status_code === 1 && res.data) {
-            appendMessage(res.data.conversationId, res.data);
-            markConversationReadLocal(res.data.conversationId);
+            const normalized = enhanceMessage(res.data);
+            appendMessage(normalized.conversationId, normalized);
+            markConversationReadLocal(normalized.conversationId);
             fetchConversations();
             chatState.pendingHint = null;
-            return res.data;
+            return normalized;
         }
         return Promise.reject(res);
     } catch (error) {
@@ -272,12 +280,17 @@ function appendMessage(conversationId, message) {
     if (!conversationId || !message) {
         return;
     }
+    const normalized = enhanceMessage(message);
     const list = chatState.messages[conversationId] ? [...chatState.messages[conversationId]] : [];
-    if (message.id && list.some(item => item && item.id === message.id)) {
-        chatState.messages[conversationId] = list;
-        return;
+    if (normalized.id) {
+        const index = list.findIndex(item => item && item.id === normalized.id);
+        if (index >= 0) {
+            list[index] = normalized;
+            chatState.messages[conversationId] = list;
+            return;
+        }
     }
-    list.push(message);
+    list.push(normalized);
     chatState.messages[conversationId] = list;
 }
 
@@ -301,6 +314,35 @@ function handleSocketMessage(event) {
             fetchConversations();
         }
     }
+}
+
+function enhanceMessage(message) {
+    if (!message) {
+        return null;
+    }
+    const normalized = { ...message };
+    normalized.messageType = Number(normalized.messageType === undefined || normalized.messageType === null
+        ? 0
+        : normalized.messageType);
+    if (normalized.extraPayload && typeof normalized.extraPayload === 'object' && normalized.extraPayload !== null) {
+        normalized.extraPayloadObject = normalized.extraPayload;
+        try {
+            normalized.extraPayload = JSON.stringify(normalized.extraPayload);
+        } catch (error) {
+            console.error('stringify extraPayload error', error);
+            normalized.extraPayload = null;
+        }
+    } else if (typeof normalized.extraPayload === 'string') {
+        try {
+            normalized.extraPayloadObject = JSON.parse(normalized.extraPayload);
+        } catch (error) {
+            normalized.extraPayloadObject = null;
+        }
+    } else {
+        normalized.extraPayloadObject = null;
+        normalized.extraPayload = normalized.extraPayload || null;
+    }
+    return normalized;
 }
 
 function connectIfNeeded() {

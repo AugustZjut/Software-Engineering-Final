@@ -154,6 +154,39 @@ class ChatServiceImplTest {
         verifyNoInteractions(idleItemDao);
     }
 
+    @Test
+    void sendProductCardBuildsPayloadFromIdle() {
+        when(chatConversationDao.selectByPair(1L, 2L, 50L)).thenReturn(null);
+        doAnswer(invocation -> {
+            ChatConversationModel model = invocation.getArgument(0);
+            model.setId(700L);
+            return 1;
+        }).when(chatConversationDao).insertSelective(any(ChatConversationModel.class));
+        IdleItemModel idle = new IdleItemModel();
+        idle.setId(50L);
+        idle.setIdleName("Test Item");
+        idle.setUserId(99L);
+        idle.setIdlePrice(new BigDecimal("480.00"));
+        idle.setPictureList("[\"cover.png\"]");
+        idle.setIdleStatus(1);
+        when(idleItemDao.selectByPrimaryKey(50L)).thenReturn(idle);
+        doAnswer(invocation -> {
+            ChatMessageModel message = invocation.getArgument(0);
+            message.setId(800L);
+            return 1;
+        }).when(chatMessageDao).insertSelective(any(ChatMessageModel.class));
+        when(userDao.findUserByList(any())).thenReturn(Arrays.asList(sender, receiver));
+
+        ChatMessageModel result = chatService.sendMessage(1L, 2L, 50L, 2, null, null);
+
+        assertThat(result.getMessageType()).isEqualTo(2);
+        assertThat(result.getExtraPayload()).contains("\"idleId\":50");
+        assertThat(result.getIdleId()).isEqualTo(50L);
+        ArgumentCaptor<ChatConversationModel> conversationCaptor = ArgumentCaptor.forClass(ChatConversationModel.class);
+        verify(chatConversationDao).insertSelective(conversationCaptor.capture());
+        assertThat(conversationCaptor.getValue().getLastMessagePreview()).isEqualTo("[商品卡片]");
+    }
+
     private UserModel createUser(Long id, String nickname) {
         UserModel user = new UserModel();
         user.setId(id);
