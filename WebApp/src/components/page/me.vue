@@ -21,6 +21,10 @@
                         <div class="user-info-details-text">
                             <div class="user-info-details-text-nickname">{{userInfo.nickname}}</div>
                             <div class="user-info-details-text-time">{{userInfo.signInTime}} 加入平台</div>
+                            <div class="user-info-details-text-credit">
+                                <span class="credit-text">信誉分：{{ creditScoreDisplay }}</span>
+                                <el-rate :model-value="creditStars" disabled></el-rate>
+                            </div>
                             <div class="user-info-details-text-edit">
                                 <el-button type="primary" plain @click="userInfoDialogVisible = true">编辑个人信息</el-button>
                             </div>
@@ -75,6 +79,36 @@
                     <div class="user-info-splace">
                         <el-button type="primary" plain @click="eidtAddress=true">编辑收货地址</el-button>
                     </div>
+                </div>
+                <div class="evaluation-summary-container">
+                    <el-tabs v-model="evaluationTab" class="evaluation-tabs">
+                        <el-tab-pane label="收到的评价" name="received">
+                            <div v-if="receivedEvaluations.length" class="evaluation-list">
+                                <div v-for="item in receivedEvaluations" :key="item.id" class="evaluation-card">
+                                    <div class="evaluation-card-header">
+                                        <span class="evaluation-card-user">来自：{{ item.from }}</span>
+                                        <el-rate :model-value="item.score" disabled></el-rate>
+                                    </div>
+                                    <div class="evaluation-card-content">{{ item.content || '对方未填写评价内容' }}</div>
+                                    <div class="evaluation-card-meta">订单ID：{{ item.orderId }} · {{ item.time }}</div>
+                                </div>
+                            </div>
+                            <el-empty v-else description="暂无评价"></el-empty>
+                        </el-tab-pane>
+                        <el-tab-pane label="我的评价" name="given">
+                            <div v-if="givenEvaluations.length" class="evaluation-list">
+                                <div v-for="item in givenEvaluations" :key="item.id" class="evaluation-card">
+                                    <div class="evaluation-card-header">
+                                        <span class="evaluation-card-user">评价：{{ item.to }}</span>
+                                        <el-rate :model-value="item.score" disabled></el-rate>
+                                    </div>
+                                    <div class="evaluation-card-content">{{ item.content || '未填写评价内容' }}</div>
+                                    <div class="evaluation-card-meta">订单ID：{{ item.orderId }} · {{ item.time }}</div>
+                                </div>
+                            </div>
+                            <el-empty v-else description="暂无评价"></el-empty>
+                        </el-tab-pane>
+                    </el-tabs>
                 </div>
                 <div class="idle-container">
                     <el-tabs v-model="activeName" @tab-click="handleClick">
@@ -259,8 +293,12 @@
                     avatar: "",
                     nickname: "",
                     signInTime: "",
+                    creditScore: 0,
                 },
-                addressData: []
+                addressData: [],
+                evaluationTab: 'received',
+                receivedEvaluations: [],
+                givenEvaluations: []
             };
         },
         created() {
@@ -282,6 +320,26 @@
             this.getMyOrder();
             this.getMySoldIdle();
             this.getMyFavorite();
+            this.loadEvaluations();
+        },
+        watch: {
+            '$globalData.userInfo': {
+                handler(value) {
+                    if (value) {
+                        this.userInfo = value;
+                    }
+                },
+                deep: true
+            }
+        },
+        computed: {
+            creditStars() {
+                const score = Number(this.userInfo.creditScore || 0);
+                return Math.max(0, Math.min(5, Math.round(score / 20)));
+            },
+            creditScoreDisplay() {
+                return this.userInfo.creditScore != null ? this.userInfo.creditScore : '--';
+            }
         },
         methods: {
             getMyFavorite(){
@@ -374,6 +432,42 @@
             handleClick(tab, event) {
                 // console.log(tab, event);
                 console.log(this.activeName);
+            },
+            loadEvaluations() {
+                Promise.all([this.$api.getReceivedEvaluations(), this.$api.getGivenEvaluations()])
+                    .then(([receivedRes, givenRes]) => {
+                        const received = receivedRes && receivedRes.status_code === 1
+                            ? (receivedRes.data || []).map(item => this.normalizeEvaluation(item))
+                            : [];
+                        const given = givenRes && givenRes.status_code === 1
+                            ? (givenRes.data || []).map(item => this.normalizeEvaluation(item))
+                            : [];
+                        this.receivedEvaluations = received;
+                        this.givenEvaluations = given;
+                    }).catch(() => {
+                        this.receivedEvaluations = [];
+                        this.givenEvaluations = [];
+                    });
+            },
+            normalizeEvaluation(item) {
+                const score = Number(item.score || 0);
+                return {
+                    id: item.id,
+                    orderId: item.orderId,
+                    score: score > 5 ? 5 : (score < 0 ? 0 : score),
+                    content: item.content || '',
+                    time: this.formatDateTime(item.createTime),
+                    from: item.evaluator && item.evaluator.nickname ? item.evaluator.nickname : '匿名用户',
+                    to: item.target && item.target.nickname ? item.target.nickname : '匿名用户'
+                };
+            },
+            formatDateTime(value) {
+                if (!value) {
+                    return '';
+                }
+                const text = String(value);
+                const formatted = text.replace('T', ' ');
+                return formatted.length > 19 ? formatted.substring(0, 19) : formatted;
             },
             saveUserNickname() {
                 this.notUserNicknameEdit = true;
@@ -738,5 +832,9 @@
         width: 800px;
         display: flex;
         justify-content: space-between;
+    }
+
+    .evaluation-summary-container {
+    padding: 0 20px;
     }
 </style>

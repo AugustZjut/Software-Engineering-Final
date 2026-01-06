@@ -168,7 +168,7 @@ class ChatServiceImplTest {
         idle.setUserId(99L);
         idle.setIdlePrice(new BigDecimal("480.00"));
         idle.setPictureList("[\"cover.png\"]");
-        idle.setIdleStatus(1);
+        idle.setIdleStatus((byte) 1);
         when(idleItemDao.selectByPrimaryKey(50L)).thenReturn(idle);
         doAnswer(invocation -> {
             ChatMessageModel message = invocation.getArgument(0);

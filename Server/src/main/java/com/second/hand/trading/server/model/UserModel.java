@@ -39,6 +39,7 @@ public class UserModel implements Serializable {
     private Date signInTime;
 
     private Byte userStatus;
+    private Integer creditScore;
 
     private static final long serialVersionUID = 1L;
 
@@ -97,6 +98,13 @@ public class UserModel implements Serializable {
     public void setUserStatus(Byte userStatus) {
         this.userStatus = userStatus;
     }
+    public Integer getCreditScore() {
+        return creditScore;
+    }
+
+    public void setCreditScore(Integer creditScore) {
+        this.creditScore = creditScore;
+    }
 
     @Override
     public boolean equals(Object that) {
@@ -115,7 +123,9 @@ public class UserModel implements Serializable {
             && (this.getUserPassword() == null ? other.getUserPassword() == null : this.getUserPassword().equals(other.getUserPassword()))
             && (this.getNickname() == null ? other.getNickname() == null : this.getNickname().equals(other.getNickname()))
             && (this.getAvatar() == null ? other.getAvatar() == null : this.getAvatar().equals(other.getAvatar()))
-            && (this.getSignInTime() == null ? other.getSignInTime() == null : this.getSignInTime().equals(other.getSignInTime()));
+            && (this.getSignInTime() == null ? other.getSignInTime() == null : this.getSignInTime().equals(other.getSignInTime()))
+            && (this.getUserStatus() == null ? other.getUserStatus() == null : this.getUserStatus().equals(other.getUserStatus()))
+            && (this.getCreditScore() == null ? other.getCreditScore() == null : this.getCreditScore().equals(other.getCreditScore()));
     }
 
     @Override
@@ -128,6 +138,7 @@ public class UserModel implements Serializable {
         result = prime * result + ((getNickname() == null) ? 0 : getNickname().hashCode());
         result = prime * result + ((getAvatar() == null) ? 0 : getAvatar().hashCode());
         result = prime * result + ((getSignInTime() == null) ? 0 : getSignInTime().hashCode());
+        result = prime * result + ((getCreditScore() == null) ? 0 : getCreditScore().hashCode());
         return result;
     }
 
@@ -143,6 +154,7 @@ public class UserModel implements Serializable {
         sb.append(", nickname=").append(nickname);
         sb.append(", avatar=").append(avatar);
         sb.append(", signInTime=").append(signInTime);
+        sb.append(", creditScore=").append(creditScore);
         sb.append(", serialVersionUID=").append(serialVersionUID);
         sb.append("]");
         return sb.toString();

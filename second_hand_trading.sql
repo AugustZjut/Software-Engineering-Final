@@ -204,6 +204,21 @@ CREATE TABLE `sh_chat_message` (
 
 /*Table structure for table `sh_user` */
 
+DROP TABLE IF EXISTS `sh_evaluation`;
+
+CREATE TABLE `sh_evaluation` (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '自增主键',
+  `order_id` bigint(20) NOT NULL COMMENT '关联的订单ID',
+  `evaluator_id` bigint(20) NOT NULL COMMENT '评价人ID',
+  `target_id` bigint(20) NOT NULL COMMENT '被评价人ID',
+  `score` tinyint(4) NOT NULL COMMENT '评分(1-5)',
+  `content` varchar(512) DEFAULT NULL COMMENT '评价内容',
+  `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '评价时间',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_order_evaluator` (`order_id`,`evaluator_id`),
+  KEY `idx_target_time` (`target_id`,`create_time`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
 DROP TABLE IF EXISTS `sh_user`;
 
 CREATE TABLE `sh_user` (
@@ -214,13 +229,14 @@ CREATE TABLE `sh_user` (
   `avatar` varchar(256) NOT NULL COMMENT '头像',
   `sign_in_time` datetime NOT NULL COMMENT '注册时间',
   `user_status` tinyint(4) DEFAULT NULL COMMENT '状态（1代表封禁）',
+  `credit_score` int(11) NOT NULL DEFAULT 80 COMMENT '信誉分',
   PRIMARY KEY (`id`),
   UNIQUE KEY `account_number` (`account_number`)
 ) ENGINE=InnoDB AUTO_INCREMENT=34 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 /*Data for the table `sh_user` */
 
-insert  into `sh_user`(`id`,`account_number`,`user_password`,`nickname`,`avatar`,`sign_in_time`,`user_status`) values (1,'17322611234','123456','MYL','http://localhost:8080/image?imageName=file16089942542411002profile.png','2020-12-17 10:49:01',0),(23,'17322611235','123456','u1235','http://localhost:8080/image?imageName=file16091261422401005touxiang5.jpg','2020-12-26 22:47:19',NULL),(24,'17322611236','123456','u1236','http://localhost:8080/image?imageName=file16091261613141006touxiang6.png','2020-12-26 22:47:30',NULL),(26,'17322611237','123456','u1237','http://localhost:8080/image?imageName=file16091261795071007touxiang7.jpg','2020-12-26 22:53:15',NULL),(27,'17322611238','123456','u1238','http://localhost:8080/image?imageName=file16091261946991008touxiang8.jpg','2020-12-28 11:21:50',NULL),(28,'17322611239','123456','u1239','http://localhost:8080/image?imageName=file16091262081901009touxiang9.jpg','2020-12-28 11:22:33',NULL),(29,'17322611230','123456','u1230','http://localhost:8080/image?imageName=file16091259892131002touxiang10.jpg','2020-12-28 11:23:15',NULL),(30,'17322611231','123456','u1231','http://localhost:8080/image?imageName=file16091260392671003touxiang1.jpg','2020-12-28 11:23:36',1),(31,'17322611232','123456','u1232','http://localhost:8080/image?imageName=file16091261011671004touxiang2.jpg','2020-12-28 11:24:04',1),(33,'17322611240','123456','u1240','http://localhost:8080/image?imageName=file16089942542411002profile.png','2020-12-17 10:49:01',0);
+insert  into `sh_user`(`id`,`account_number`,`user_password`,`nickname`,`avatar`,`sign_in_time`,`user_status`,`credit_score`) values (1,'17322611234','123456','MYL','http://localhost:8080/image?imageName=file16089942542411002profile.png','2020-12-17 10:49:01',0,85),(23,'17322611235','123456','u1235','http://localhost:8080/image?imageName=file16091261422401005touxiang5.jpg','2020-12-26 22:47:19',NULL,80),(24,'17322611236','123456','u1236','http://localhost:8080/image?imageName=file16091261613141006touxiang6.png','2020-12-26 22:47:30',NULL,80),(26,'17322611237','123456','u1237','http://localhost:8080/image?imageName=file16091261795071007touxiang7.jpg','2020-12-26 22:53:15',NULL,78),(27,'17322611238','123456','u1238','http://localhost:8080/image?imageName=file16091261946991008touxiang8.jpg','2020-12-28 11:21:50',NULL,82),(28,'17322611239','123456','u1239','http://localhost:8080/image?imageName=file16091262081901009touxiang9.jpg','2020-12-28 11:22:33',NULL,77),(29,'17322611230','123456','u1230','http://localhost:8080/image?imageName=file16091259892131002touxiang10.jpg','2020-12-28 11:23:15',NULL,83),(30,'17322611231','123456','u1231','http://localhost:8080/image?imageName=file16091260392671003touxiang1.jpg','2020-12-28 11:23:36',1,70),(31,'17322611232','123456','u1232','http://localhost:8080/image?imageName=file16091261011671004touxiang2.jpg','2020-12-28 11:24:04',1,68),(33,'17322611240','123456','u1240','http://localhost:8080/image?imageName=file16089942542411002profile.png','2020-12-17 10:49:01',0,86);
 
 /*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
 /*!40014 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS */;

@@ -148,6 +148,39 @@ const api = {
             params: query
         });
     },
+    submitEvaluation(data) {
+        return request({
+            url: '/evaluation/add',
+            method: 'post',
+            data: data
+        });
+    },
+    getReceivedEvaluations() {
+        return request({
+            url: '/evaluation/received',
+            method: 'get'
+        });
+    },
+    getGivenEvaluations() {
+        return request({
+            url: '/evaluation/given',
+            method: 'get'
+        });
+    },
+    getOrderEvaluations(query) {
+        return request({
+            url: '/evaluation/order/all',
+            method: 'get',
+            params: query
+        });
+    },
+    getMyEvaluation(query) {
+        return request({
+            url: '/evaluation/order',
+            method: 'get',
+            params: query
+        });
+    },
     addOrderAddress(data) {
         return request({
             url: '/order-address/add',

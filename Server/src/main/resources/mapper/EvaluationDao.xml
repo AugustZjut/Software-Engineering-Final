@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.second.hand.trading.server.dao.EvaluationDao">
+  <resultMap id="BaseResultMap" type="com.second.hand.trading.server.model.EvaluationModel">
+    <id column="id" jdbcType="BIGINT" property="id" />
+    <result column="order_id" jdbcType="BIGINT" property="orderId" />
+    <result column="evaluator_id" jdbcType="BIGINT" property="evaluatorId" />
+    <result column="target_id" jdbcType="BIGINT" property="targetId" />
+    <result column="score" jdbcType="INTEGER" property="score" />
+    <result column="content" jdbcType="VARCHAR" property="content" />
+    <result column="create_time" jdbcType="TIMESTAMP" property="createTime" />
+    <association property="evaluator" javaType="com.second.hand.trading.server.model.UserModel">
+      <id column="evaluator_user_id" jdbcType="BIGINT" property="id" />
+      <result column="evaluator_account_number" jdbcType="VARCHAR" property="accountNumber" />
+      <result column="evaluator_nickname" jdbcType="VARCHAR" property="nickname" />
+      <result column="evaluator_avatar" jdbcType="VARCHAR" property="avatar" />
+      <result column="evaluator_sign_in_time" jdbcType="TIMESTAMP" property="signInTime" />
+      <result column="evaluator_user_status" jdbcType="TINYINT" property="userStatus" />
+      <result column="evaluator_credit_score" jdbcType="INTEGER" property="creditScore" />
+    </association>
+    <association property="target" javaType="com.second.hand.trading.server.model.UserModel">
+      <id column="target_user_id" jdbcType="BIGINT" property="id" />
+      <result column="target_account_number" jdbcType="VARCHAR" property="accountNumber" />
+      <result column="target_nickname" jdbcType="VARCHAR" property="nickname" />
+      <result column="target_avatar" jdbcType="VARCHAR" property="avatar" />
+      <result column="target_sign_in_time" jdbcType="TIMESTAMP" property="signInTime" />
+      <result column="target_user_status" jdbcType="TINYINT" property="userStatus" />
+      <result column="target_credit_score" jdbcType="INTEGER" property="creditScore" />
+    </association>
+  </resultMap>
+
+  <sql id="Base_Column_List">
+    e.id, e.order_id, e.evaluator_id, e.target_id, e.score, e.content, e.create_time
+  </sql>
+
+  <sql id="User_Select_Columns_Evaluator">
+    eu.id as evaluator_user_id, eu.account_number as evaluator_account_number,
+    eu.nickname as evaluator_nickname, eu.avatar as evaluator_avatar,
+    eu.sign_in_time as evaluator_sign_in_time, eu.user_status as evaluator_user_status,
+    eu.credit_score as evaluator_credit_score
+  </sql>
+
+  <sql id="User_Select_Columns_Target">
+    tu.id as target_user_id, tu.account_number as target_account_number,
+    tu.nickname as target_nickname, tu.avatar as target_avatar,
+    tu.sign_in_time as target_sign_in_time, tu.user_status as target_user_status,
+    tu.credit_score as target_credit_score
+  </sql>
+
+  <insert id="insertSelective" keyProperty="id" keyColumn="id" parameterType="com.second.hand.trading.server.model.EvaluationModel" useGeneratedKeys="true">
+    insert into sh_evaluation
+    <trim prefix="(" suffix=")" suffixOverrides=",">
+      <if test="orderId != null">
+        order_id,
+      </if>
+      <if test="evaluatorId != null">
+        evaluator_id,
+      </if>
+      <if test="targetId != null">
+        target_id,
+      </if>
+      <if test="score != null">
+        score,
+      </if>
+      <if test="content != null">
+        content,
+      </if>
+      <if test="createTime != null">
+        create_time,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides=",">
+      <if test="orderId != null">
+        #{orderId,jdbcType=BIGINT},
+      </if>
+      <if test="evaluatorId != null">
+        #{evaluatorId,jdbcType=BIGINT},
+      </if>
+      <if test="targetId != null">
+        #{targetId,jdbcType=BIGINT},
+      </if>
+      <if test="score != null">
+        #{score,jdbcType=INTEGER},
+      </if>
+      <if test="content != null">
+        #{content,jdbcType=VARCHAR},
+      </if>
+      <if test="createTime != null">
+        #{createTime,jdbcType=TIMESTAMP},
+      </if>
+    </trim>
+  </insert>
+
+  <select id="selectByOrderAndEvaluator" resultMap="BaseResultMap">
+    select
+    <include refid="Base_Column_List" />,
+    <include refid="User_Select_Columns_Evaluator" />,
+    <include refid="User_Select_Columns_Target" />
+    from sh_evaluation e
+    left join sh_user eu on e.evaluator_id = eu.id
+    left join sh_user tu on e.target_id = tu.id
+    where e.order_id = #{orderId,jdbcType=BIGINT}
+      and e.evaluator_id = #{evaluatorId,jdbcType=BIGINT}
+  </select>
+
+  <select id="selectByTargetId" resultMap="BaseResultMap">
+    select
+    <include refid="Base_Column_List" />,
+    <include refid="User_Select_Columns_Evaluator" />,
+    <include refid="User_Select_Columns_Target" />
+    from sh_evaluation e
+    left join sh_user eu on e.evaluator_id = eu.id
+    left join sh_user tu on e.target_id = tu.id
+    where e.target_id = #{targetId,jdbcType=BIGINT}
+    order by e.create_time desc, e.id desc
+  </select>
+
+  <select id="selectByEvaluatorId" resultMap="BaseResultMap">
+    select
+    <include refid="Base_Column_List" />,
+    <include refid="User_Select_Columns_Evaluator" />,
+    <include refid="User_Select_Columns_Target" />
+    from sh_evaluation e
+    left join sh_user eu on e.evaluator_id = eu.id
+    left join sh_user tu on e.target_id = tu.id
+    where e.evaluator_id = #{evaluatorId,jdbcType=BIGINT}
+    order by e.create_time desc, e.id desc
+  </select>
+
+  <select id="selectAverageScoreByTargetId" resultType="double">
+    select avg(score)
+    from sh_evaluation
+    where target_id = #{targetId,jdbcType=BIGINT}
+  </select>
+
+  <select id="selectByOrderId" resultMap="BaseResultMap">
+    select
+    <include refid="Base_Column_List" />,
+    <include refid="User_Select_Columns_Evaluator" />,
+    <include refid="User_Select_Columns_Target" />
+    from sh_evaluation e
+    left join sh_user eu on e.evaluator_id = eu.id
+    left join sh_user tu on e.target_id = tu.id
+    where e.order_id = #{orderId,jdbcType=BIGINT}
+    order by e.create_time asc, e.id asc
+  </select>
+</mapper>
