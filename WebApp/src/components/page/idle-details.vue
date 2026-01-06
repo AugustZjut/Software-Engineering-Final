@@ -150,9 +150,7 @@
                     this.checkFavorite();
                     this.getAllIdleMessage();
                 }
-                $('html,body').animate({
-                    scrollTop: 0
-                }, {duration: 500, easing: "swing"});
+                this.$nextTick(() => window.scrollTo({ top: 0, behavior: 'smooth' }));
             });
         },
         methods: {
@@ -189,9 +187,11 @@
                 return "";
             },
             replyMessage(index){
-                $('html,body').animate({
-                    scrollTop: $("#replyMessageLocation").offset().top-600
-                }, {duration: 500, easing: "swing"});
+                const replyTarget = document.getElementById('replyMessageLocation');
+                if (replyTarget) {
+                    const targetOffset = replyTarget.getBoundingClientRect().top + window.pageYOffset - 600;
+                    window.scrollTo({ top: Math.max(targetOffset, 0), behavior: 'smooth' });
+                }
                 this.isReply=true;
                 this.replyData.toUserNickname=this.messageList[index].fromU.nickname;
                 this.replyData.toMessage=this.messageList[index].content.substring(0,10)+(this.messageList[index].content.length>10?'...':'');

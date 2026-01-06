@@ -1,0 +1,212 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.second.hand.trading.server.dao.ChatConversationDao">
+  <resultMap id="BaseResultMap" type="com.second.hand.trading.server.model.ChatConversationModel">
+    <id column="id" jdbcType="BIGINT" property="id" />
+    <result column="user_a_id" jdbcType="BIGINT" property="userAId" />
+    <result column="user_b_id" jdbcType="BIGINT" property="userBId" />
+    <result column="idle_id" jdbcType="BIGINT" property="idleId" />
+    <result column="context_snapshot" jdbcType="LONGVARCHAR" property="contextSnapshot" />
+    <result column="last_message_preview" jdbcType="VARCHAR" property="lastMessagePreview" />
+    <result column="last_message_time" jdbcType="TIMESTAMP" property="lastMessageTime" />
+    <result column="user_a_unread" jdbcType="INTEGER" property="userAUnread" />
+    <result column="user_b_unread" jdbcType="INTEGER" property="userBUnread" />
+    <result column="create_time" jdbcType="TIMESTAMP" property="createTime" />
+    <result column="update_time" jdbcType="TIMESTAMP" property="updateTime" />
+  </resultMap>
+
+  <sql id="Base_Column_List">
+    id, user_a_id, user_b_id, idle_id, context_snapshot, last_message_preview,
+    last_message_time, user_a_unread, user_b_unread, create_time, update_time
+  </sql>
+
+  <select id="selectByPrimaryKey" parameterType="java.lang.Long" resultMap="BaseResultMap">
+    select
+    <include refid="Base_Column_List" />
+    from sh_chat_conversation
+    where id = #{id,jdbcType=BIGINT}
+  </select>
+
+  <select id="selectByPair" resultMap="BaseResultMap">
+    select
+    <include refid="Base_Column_List" />
+    from sh_chat_conversation
+    where user_a_id = #{userAId,jdbcType=BIGINT}
+      and user_b_id = #{userBId,jdbcType=BIGINT}
+      and idle_id = #{idleId,jdbcType=BIGINT}
+  </select>
+
+  <select id="listByUserId" resultMap="BaseResultMap">
+    select
+    <include refid="Base_Column_List" />
+    from sh_chat_conversation
+    where user_a_id = #{userId,jdbcType=BIGINT}
+       or user_b_id = #{userId,jdbcType=BIGINT}
+    order by update_time desc, id desc
+  </select>
+
+  <delete id="deleteByPrimaryKey" parameterType="java.lang.Long">
+    delete from sh_chat_conversation
+    where id = #{id,jdbcType=BIGINT}
+  </delete>
+
+  <insert id="insert" keyColumn="id" keyProperty="id" parameterType="com.second.hand.trading.server.model.ChatConversationModel" useGeneratedKeys="true">
+    insert into sh_chat_conversation (user_a_id, user_b_id, idle_id,
+      context_snapshot, last_message_preview, last_message_time,
+      user_a_unread, user_b_unread, create_time, update_time
+      )
+    values (#{userAId,jdbcType=BIGINT}, #{userBId,jdbcType=BIGINT}, #{idleId,jdbcType=BIGINT},
+      #{contextSnapshot,jdbcType=LONGVARCHAR}, #{lastMessagePreview,jdbcType=VARCHAR}, #{lastMessageTime,jdbcType=TIMESTAMP},
+      #{userAUnread,jdbcType=INTEGER}, #{userBUnread,jdbcType=INTEGER}, #{createTime,jdbcType=TIMESTAMP}, #{updateTime,jdbcType=TIMESTAMP}
+      )
+  </insert>
+
+  <insert id="insertSelective" keyColumn="id" keyProperty="id" parameterType="com.second.hand.trading.server.model.ChatConversationModel" useGeneratedKeys="true">
+    insert into sh_chat_conversation
+    <trim prefix="(" suffix=")" suffixOverrides=",">
+      <if test="userAId != null">
+        user_a_id,
+      </if>
+      <if test="userBId != null">
+        user_b_id,
+      </if>
+      <if test="idleId != null">
+        idle_id,
+      </if>
+      <if test="contextSnapshot != null">
+        context_snapshot,
+      </if>
+      <if test="lastMessagePreview != null">
+        last_message_preview,
+      </if>
+      <if test="lastMessageTime != null">
+        last_message_time,
+      </if>
+      <if test="userAUnread != null">
+        user_a_unread,
+      </if>
+      <if test="userBUnread != null">
+        user_b_unread,
+      </if>
+      <if test="createTime != null">
+        create_time,
+      </if>
+      <if test="updateTime != null">
+        update_time,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides=",">
+      <if test="userAId != null">
+        #{userAId,jdbcType=BIGINT},
+      </if>
+      <if test="userBId != null">
+        #{userBId,jdbcType=BIGINT},
+      </if>
+      <if test="idleId != null">
+        #{idleId,jdbcType=BIGINT},
+      </if>
+      <if test="contextSnapshot != null">
+        #{contextSnapshot,jdbcType=LONGVARCHAR},
+      </if>
+      <if test="lastMessagePreview != null">
+        #{lastMessagePreview,jdbcType=VARCHAR},
+      </if>
+      <if test="lastMessageTime != null">
+        #{lastMessageTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="userAUnread != null">
+        #{userAUnread,jdbcType=INTEGER},
+      </if>
+      <if test="userBUnread != null">
+        #{userBUnread,jdbcType=INTEGER},
+      </if>
+      <if test="createTime != null">
+        #{createTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="updateTime != null">
+        #{updateTime,jdbcType=TIMESTAMP},
+      </if>
+    </trim>
+  </insert>
+
+  <update id="updateByPrimaryKeySelective" parameterType="com.second.hand.trading.server.model.ChatConversationModel">
+    update sh_chat_conversation
+    <set>
+      <if test="userAId != null">
+        user_a_id = #{userAId,jdbcType=BIGINT},
+      </if>
+      <if test="userBId != null">
+        user_b_id = #{userBId,jdbcType=BIGINT},
+      </if>
+      <if test="idleId != null">
+        idle_id = #{idleId,jdbcType=BIGINT},
+      </if>
+      <if test="contextSnapshot != null">
+        context_snapshot = #{contextSnapshot,jdbcType=LONGVARCHAR},
+      </if>
+      <if test="lastMessagePreview != null">
+        last_message_preview = #{lastMessagePreview,jdbcType=VARCHAR},
+      </if>
+      <if test="lastMessageTime != null">
+        last_message_time = #{lastMessageTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="userAUnread != null">
+        user_a_unread = #{userAUnread,jdbcType=INTEGER},
+      </if>
+      <if test="userBUnread != null">
+        user_b_unread = #{userBUnread,jdbcType=INTEGER},
+      </if>
+      <if test="createTime != null">
+        create_time = #{createTime,jdbcType=TIMESTAMP},
+      </if>
+      <if test="updateTime != null">
+        update_time = #{updateTime,jdbcType=TIMESTAMP},
+      </if>
+    </set>
+    where id = #{id,jdbcType=BIGINT}
+  </update>
+
+  <update id="updateByPrimaryKey" parameterType="com.second.hand.trading.server.model.ChatConversationModel">
+    update sh_chat_conversation
+    set user_a_id = #{userAId,jdbcType=BIGINT},
+      user_b_id = #{userBId,jdbcType=BIGINT},
+      idle_id = #{idleId,jdbcType=BIGINT},
+      context_snapshot = #{contextSnapshot,jdbcType=LONGVARCHAR},
+      last_message_preview = #{lastMessagePreview,jdbcType=VARCHAR},
+      last_message_time = #{lastMessageTime,jdbcType=TIMESTAMP},
+      user_a_unread = #{userAUnread,jdbcType=INTEGER},
+      user_b_unread = #{userBUnread,jdbcType=INTEGER},
+      create_time = #{createTime,jdbcType=TIMESTAMP},
+      update_time = #{updateTime,jdbcType=TIMESTAMP}
+    where id = #{id,jdbcType=BIGINT}
+  </update>
+
+  <update id="updateUnreadForSend">
+    update sh_chat_conversation
+    <set>
+      user_a_unread = #{userAUnread,jdbcType=INTEGER},
+      user_b_unread = #{userBUnread,jdbcType=INTEGER},
+      last_message_preview = #{lastMessagePreview,jdbcType=VARCHAR},
+      last_message_time = #{lastMessageTime,jdbcType=TIMESTAMP},
+      <if test="contextSnapshot != null">
+        context_snapshot = #{contextSnapshot,jdbcType=LONGVARCHAR},
+      </if>
+      update_time = CURRENT_TIMESTAMP
+    </set>
+    where id = #{conversationId,jdbcType=BIGINT}
+  </update>
+
+  <update id="resetUnreadForUserA">
+    update sh_chat_conversation
+    set user_a_unread = 0,
+        update_time = CURRENT_TIMESTAMP
+    where id = #{conversationId,jdbcType=BIGINT}
+  </update>
+
+  <update id="resetUnreadForUserB">
+    update sh_chat_conversation
+    set user_b_unread = 0,
+        update_time = CURRENT_TIMESTAMP
+    where id = #{conversationId,jdbcType=BIGINT}
+  </update>
+</mapper>

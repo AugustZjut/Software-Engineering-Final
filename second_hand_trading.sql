@@ -160,6 +160,48 @@ CREATE TABLE `sh_order_address` (
 
 insert  into `sh_order_address`(`id`,`order_id`,`consignee_name`,`consignee_phone`,`detail_address`) values (12,17,'shiny','17322611234','广东省佛山市禅城区江湾一路1号'),(13,18,'hhhh','17322610001','广东省佛山市禅城区江湾一路2号'),(14,19,'hhhh','17322610001','广东省佛山市禅城区江湾一路2号'),(15,20,'hhhh','17322610001','广东省佛山市禅城区江湾一路2号'),(16,21,'hhhh','17322610001','广东省佛山市禅城区江湾一路2号'),(17,22,'hhhh','17322610001','广东省佛山市禅城区江湾一路2号'),(18,28,'hhhh','17322610001','广东省佛山市禅城区江湾一路2号'),(19,29,'hhhh','17322610001','广东省佛山市禅城区江湾一路2号'),(20,30,'hhhh','17322610001','广东省佛山市禅城区江湾一路2号'),(21,31,'hhhh','17322610001','广东省佛山市禅城区江湾一路2号'),(22,32,'shiny','17322611234','广东省佛山市禅城区江湾一路1号'),(23,33,'shiny','17322611234','广东省佛山市禅城区江湾一路1号'),(24,36,'shiny','17322611234','广东省佛山市禅城区江湾一路1号'),(25,37,'lll','17322612356','山东省淄博市博山区fdsafsdfsdfsd'),(26,39,'lll','17322612356','山东省淄博市博山区fdsafsdfsdfsd'),(27,40,'lll','17322612356','山东省淄博市博山区fdsafsdfsdfsd'),(28,41,'lll','17322612356','山东省淄博市博山区fdsafsdfsdfsd'),(29,42,'lll','17322612356','山东省淄博市博山区fdsafsdfsdfsd'),(30,43,'lll','17322612356','山东省淄博市博山区fdsafsdfsdfsd'),(31,44,'lll','17322612356','山东省淄博市博山区fdsafsdfsdfsd'),(32,45,'lll','17322612356','山东省淄博市博山区fdsafsdfsdfsd'),(33,46,'lll','17322612356','山东省淄博市博山区fdsafsdfsdfsd'),(34,47,'lll','17322612356','山东省淄博市博山区fdsafsdfsdfsd'),(35,48,'lll','17322612356','山东省淄博市博山区fdsafsdfsdfsd'),(36,49,'lll','17322612356','山东省淄博市博山区fdsafsdfsdfsd'),(37,50,'lll','17322612356','山东省淄博市博山区fdsafsdfsdfsd'),(38,51,'lll','17322612356','山东省淄博市博山区fdsafsdfsdfsd'),(39,52,'lll','17322612356','山东省淄博市博山区fdsafsdfsdfsd'),(40,53,'lll','17322612356','山东省淄博市博山区fdsafsdfsdfsd'),(41,54,'lll','17322612356','山东省淄博市博山区fdsafsdfsdfsd');
 
+/*Table structure for table `sh_chat_conversation` */
+
+DROP TABLE IF EXISTS `sh_chat_conversation`;
+
+CREATE TABLE `sh_chat_conversation` (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '自增主键',
+  `user_a_id` bigint(20) NOT NULL COMMENT '会话参与人A（较小的用户ID）',
+  `user_b_id` bigint(20) NOT NULL COMMENT '会话参与人B（较大的用户ID）',
+  `idle_id` bigint(20) NOT NULL DEFAULT 0 COMMENT '关联的闲置物ID，为0表示无关联',
+  `context_snapshot` json DEFAULT NULL COMMENT '关联闲置信息快照',
+  `last_message_preview` varchar(256) DEFAULT NULL COMMENT '最新消息摘要',
+  `last_message_time` datetime DEFAULT NULL COMMENT '最新消息时间',
+  `user_a_unread` int(11) NOT NULL DEFAULT 0 COMMENT '用户A未读数',
+  `user_b_unread` int(11) NOT NULL DEFAULT 0 COMMENT '用户B未读数',
+  `create_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `update_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_pair_idle` (`user_a_id`,`user_b_id`,`idle_id`),
+  KEY `idx_last_message_time` (`last_message_time`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+/*Table structure for table `sh_chat_message` */
+
+DROP TABLE IF EXISTS `sh_chat_message`;
+
+CREATE TABLE `sh_chat_message` (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '自增主键',
+  `conversation_id` bigint(20) NOT NULL COMMENT '所属会话ID',
+  `sender_id` bigint(20) NOT NULL COMMENT '发送者用户ID',
+  `receiver_id` bigint(20) NOT NULL COMMENT '接收者用户ID',
+  `idle_id` bigint(20) DEFAULT NULL COMMENT '关联的闲置物ID，可为空',
+  `message_type` tinyint(4) NOT NULL DEFAULT 0 COMMENT '消息类型（0文本、1图片、2系统）',
+  `content` text NOT NULL COMMENT '消息内容',
+  `extra_payload` json DEFAULT NULL COMMENT '附加数据(JSON)',
+  `send_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '发送时间',
+  `read_time` datetime DEFAULT NULL COMMENT '阅读时间',
+  PRIMARY KEY (`id`),
+  KEY `idx_conversation_time` (`conversation_id`,`send_time`),
+  KEY `idx_sender_time` (`sender_id`,`send_time`),
+  CONSTRAINT `fk_chat_message_conversation` FOREIGN KEY (`conversation_id`) REFERENCES `sh_chat_conversation` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
 /*Table structure for table `sh_user` */
 
 DROP TABLE IF EXISTS `sh_user`;

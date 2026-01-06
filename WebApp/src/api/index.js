@@ -232,6 +232,33 @@ const api = {
             params: query
         });
     },
+    getChatConversations() {
+        return request({
+            url: '/chat/conversations',
+            method: 'get'
+        });
+    },
+    getChatMessages(query) {
+        return request({
+            url: '/chat/messages',
+            method: 'get',
+            params: query
+        });
+    },
+    sendChatMessage(data) {
+        return request({
+            url: '/chat/send',
+            method: 'post',
+            data: data
+        });
+    },
+    readChatConversation(data) {
+        return request({
+            url: '/chat/read',
+            method: 'post',
+            data: data
+        });
+    },
     getGoods(query) {
         return request({
             url: '/admin/idleList',

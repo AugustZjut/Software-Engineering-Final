@@ -26,6 +26,11 @@ const routes = [
         meta: { title: '消息 | 二手交易平台' }
     },
     {
+        path: '/chat',
+        component: () => import('../components/page/chat.vue'),
+        meta: { title: '聊天 | 二手交易平台' }
+    },
+    {
         path: '/release',
         component: () => import('../components/page/release.vue'),
         meta: { title: '发布闲置 | 二手交易平台' }

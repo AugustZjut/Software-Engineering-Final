@@ -83,8 +83,8 @@
                 }
             },
             toMessage(){
-                if ('/message' !== this.$route.path) {
-                    this.$router.push({path: '/message'});
+                if ('/chat' !== this.$route.path) {
+                    this.$router.push({path: '/chat'});
                 }
             },
             toRelease(){
@@ -95,6 +95,7 @@
             loginOut(){
                 this.$api.logout().then(res=>{
                     if(res.status_code===1){
+                        this.$chatStore.reset();
                         this.$globalData.userInfo={};
                         console.log("login out");
                         if ('/index' === this.$route.path) {
