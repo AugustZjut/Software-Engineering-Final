@@ -36,7 +36,14 @@
                                 <div class="chat-message-product-price" v-if="resolveProductPrice(message)">
                                     ￥{{ resolveProductPrice(message) }}
                                 </div>
-                                <el-button type="primary" text size="small" @click="emitViewIdle(message)">查看商品</el-button>
+                                <el-button
+                                    class="chat-message-product-button"
+                                    type="primary"
+                                    text
+                                    size="small"
+                                    @click="emitViewIdle(message)">
+                                    查看商品
+                                </el-button>
                             </div>
                         </div>
                     </template>
@@ -312,6 +319,29 @@ export default {
 .chat-message-product-price {
     color: #f56c6c;
     font-weight: 600;
+}
+
+.chat-message-product-button {
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: inherit;
+}
+
+.chat-message-product-button:focus,
+.chat-message-product-button:hover {
+    background: transparent;
+    color: inherit;
+}
+
+.chat-message-row.from-self .chat-message-product-button {
+    color: #ffffff;
+}
+
+.chat-message-row.from-self .chat-message-product-button:hover,
+.chat-message-row.from-self .chat-message-product-button:focus {
+    color: rgba(255, 255, 255, 0.85);
+    background: transparent;
 }
 
 .chat-message-system {
