@@ -1,27 +1,13 @@
-# Created by .ignore support plugin (hsz.mobi)
-### Example user template template
-### Example user template
-
-# IntelliJ project files
+### JetBrains IDEs ###
 .idea
 *.iml
-out
-gen
-*/target
-### Java template
-# Compiled class file
+*.iws
+
+### Java / Maven ###
+target/
+*/target/
 *.class
-
-# Log file
 *.log
-
-# BlueJ files
-*.ctxt
-
-# Mobile Tools for Java (J2ME)
-.mtj.tmp/
-
-# Package Files #
 *.war
 *.nar
 *.ear
@@ -29,19 +15,21 @@ gen
 *.tar.gz
 *.rar
 
-#Docker files
-Dockerfile
-docker-compose.yml
+### Node / WebApp ###
+# 重点：必须忽略所有 node_modules 和 dist
+**/node_modules/
+**/dist/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json      # 可选：有人喜欢提交 lock 文件锁定版本，有人不喜欢，看你习惯，通常建议保留但这里如果不熟悉可以忽略
 
+### OS Files ###
+.DS_Store
+Thumbs.db
 
+### User Data ###
+# 用户上传图片目录，绝对不能提交
+userFile/
+mysql-data/            # 如果你也把数据库文件挂载到项目里了，这个也要忽略
 
-# virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
-hs_err_pid*
-
-*.mvn
-*mvnw
-*mvnw.cmd
-
-userFile
-target
-nginx.conf

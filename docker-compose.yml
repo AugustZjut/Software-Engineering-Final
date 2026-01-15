@@ -59,13 +59,14 @@ services:
       - mysql
       - eureka-server
     environment:
-      # 覆盖 application.properties 中的 localhost 配置
-      # 格式: spring.datasource.url -> SPRING_DATASOURCE_URL
-      # 注意：这里的 host 必须写 docker-compose 中的服务名 'mysql'
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/second_hand_trading?serverTimezone=GMT%2B8&useUnicode=true&characterEncoding=utf-8
       SPRING_DATASOURCE_PASSWORD: zyc20050817
-      # 修改 Eureka 地址指向容器名 'eureka-server'
       EUREKA_CLIENT_SERVICE-URL_DEFAULTZONE: http://eureka-server:8761/eureka/
+      # 1. 新增：将基础URL设置为相对路径 /api，这样前端通过网关代理访问图片时就不会出现跨域或IP错误
+      baseUrl: /api
+    volumes:
+      # 2. 新增：将容器内的上传目录挂载到宿主机，保持数据持久化
+      - ./user_data:/app/userFile
 
   # --------------------------------------------------------
   # 4. Gateway 网关服务
