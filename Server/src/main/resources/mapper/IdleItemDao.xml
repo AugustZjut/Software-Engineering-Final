@@ -68,6 +68,52 @@
     </foreach>
     order by id desc
   </select>
+  <select id="listHotItems" resultMap="BaseResultMap">
+    select i.id, i.idle_name, i.idle_details, i.picture_list,
+      i.idle_price, i.idle_place, i.idle_label,
+      i.release_time, i.idle_status, i.user_id
+    from sh_idle_item i
+    left join (
+      select idle_id, count(*) as fav_cnt
+      from sh_favorite
+      group by idle_id
+    ) fav on i.id = fav.idle_id
+    where i.idle_status = 1
+    order by coalesce(fav.fav_cnt, 0) desc, i.release_time desc, i.id desc
+    limit #{limit}
+  </select>
+  <select id="listLatestItems" resultMap="BaseResultMap">
+    select
+    <include refid="Base_Column_List" />
+    from sh_idle_item
+    where idle_status = 1
+    order by release_time desc, id desc
+    limit #{limit}
+  </select>
+  <select id="listByCity" resultMap="BaseResultMap">
+    select
+    <include refid="Base_Column_List" />
+    from sh_idle_item
+    where idle_status = 1 and idle_place = #{idlePlace}
+    order by release_time desc, id desc
+    limit #{limit}
+  </select>
+  <select id="listSimilarItems" resultMap="BaseResultMap">
+    select
+    <include refid="Base_Column_List" />
+    from sh_idle_item
+    where idle_status = 1
+      and idle_label = #{idleLabel}
+      and id != #{idleId}
+      <if test="idlePlace != null and idlePlace != ''">
+        and idle_place = #{idlePlace}
+      </if>
+      <if test="searchToken != null and searchToken != ''">
+        and idle_name like concat('%', #{searchToken}, '%')
+      </if>
+    order by release_time desc, id desc
+    limit #{limit}
+  </select>
   <delete id="deleteByPrimaryKey" parameterType="java.lang.Long">
     delete from sh_idle_item
     where id = #{id,jdbcType=BIGINT}

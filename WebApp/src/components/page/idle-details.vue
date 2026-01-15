@@ -36,6 +36,31 @@
                     </div>
                 </div>
 
+                <div class="guess-container" v-if="guessList.length">
+                    <div class="guess-title">猜你喜欢</div>
+                    <el-row :gutter="20">
+                        <el-col :span="6" v-for="item in guessList" :key="'guess-'+item.id">
+                            <div class="guess-card" @click="toDetails(item.id)">
+                                <el-image
+                                        :src="item.imgUrl"
+                                        style="width: 100%; height: 140px"
+                                        fit="cover">
+                                    <template #error>
+                                        <div class="image-slot">
+                                            <i class="el-icon-picture-outline">无图</i>
+                                        </div>
+                                    </template>
+                                </el-image>
+                                <div class="guess-card-title">{{item.idleName}}</div>
+                                <div class="guess-card-meta">
+                                    <span class="guess-card-price">￥{{item.idlePrice}}</span>
+                                    <span class="guess-card-place">{{item.idlePlace}}</span>
+                                </div>
+                            </div>
+                        </el-col>
+                    </el-row>
+                </div>
+
                 <div class="message-container" id="replyMessageLocation">
                     <div class="message-title">全部留言</div>
                     <div class="message-send">
@@ -140,38 +165,86 @@
                 },
                 isMaster:false,
                 isFavorite:true,
-                favoriteId:0
+                favoriteId:0,
+                guessList:[]
             };
         },
         created(){
-            let id=this.$route.query.id;
-            this.$api.getIdleItem({
-                id:id
-            }).then(res=>{
-                console.log(res);
-                if(res.data){
-                    let list=res.data.idleDetails.split(/\r?\n/);
-                    let str='';
-                    for(let i=0;i<list.length;i++){
-                        str+='<p>'+list[i]+'</p>';
-                    }
-                    res.data.idleDetails=str;
-                    res.data.pictureList=JSON.parse(res.data.pictureList);
-                    this.idleItemInfo=res.data;
-                    console.log(this.idleItemInfo);
-                    let userId=this.getCookie('shUserId');
-                    console.log('userid',userId)
-                    if(userId == this.idleItemInfo.userId){
-                        console.log('isMaster');
-                        this.isMaster=true;
-                    }
-                    this.checkFavorite();
-                    this.getAllIdleMessage();
+            const id=this.$route.query.id;
+            this.fetchIdleDetail(id);
+        },
+        watch: {
+            '$route.query.id'(newId, oldId){
+                if(newId && newId !== oldId){
+                    this.fetchIdleDetail(newId);
                 }
-                this.$nextTick(() => window.scrollTo({ top: 0, behavior: 'smooth' }));
-            });
+            }
         },
         methods: {
+            fetchIdleDetail(id){
+                if(!id){
+                    return;
+                }
+                this.isMaster=false;
+                this.isFavorite=true;
+                this.favoriteId=0;
+                this.messageContent='';
+                this.isReply=false;
+                this.messageList=[];
+                this.guessList=[];
+                this.$api.getIdleItem({
+                    id:id
+                }).then(res=>{
+                    if(res.data){
+                        const detailLines = (res.data.idleDetails || '').split(/\r?\n/);
+                        let str='';
+                        for(let i=0;i<detailLines.length;i++){
+                            str+='<p>'+detailLines[i]+'</p>';
+                        }
+                        res.data.idleDetails=str;
+                        try {
+                            res.data.pictureList=JSON.parse(res.data.pictureList || '[]');
+                        } catch (e) {
+                            res.data.pictureList=[];
+                        }
+                        this.idleItemInfo=res.data;
+                        let userId=this.getCookie('shUserId');
+                        if(userId == this.idleItemInfo.userId){
+                            this.isMaster=true;
+                        }
+                        this.checkFavorite();
+                        this.getAllIdleMessage();
+                        this.loadGuessList();
+                    }
+                    this.$nextTick(() => window.scrollTo({ top: 0, behavior: 'smooth' }));
+                });
+            },
+            loadGuessList(){
+                if(!this.idleItemInfo.id){
+                    return;
+                }
+                this.$api.getContentRecommend({
+                    idleId: this.idleItemInfo.id,
+                    limit: 8
+                }).then(res=>{
+                    if(res.status_code===1 && Array.isArray(res.data)){
+                        this.guessList = this.decorateGuessList(res.data);
+                    }
+                }).catch(()=>{
+                });
+            },
+            decorateGuessList(list){
+                return list.map(item=>{
+                    const copy = {...item};
+                    try {
+                        const pictures = JSON.parse(copy.pictureList || '[]');
+                        copy.imgUrl = Array.isArray(pictures) && pictures.length > 0 ? pictures[0] : '';
+                    } catch (e) {
+                        copy.imgUrl = '';
+                    }
+                    return copy;
+                });
+            },
             getAllIdleMessage(){
                 this.$api.getAllIdleMessage({
                     idleId:this.idleItemInfo.id
@@ -350,6 +423,12 @@
                 }else{
                     this.$message.error("留言为空！");
                 }
+            },
+            toDetails(id){
+                if(id === this.idleItemInfo.id){
+                    return;
+                }
+                this.$router.push({path: '/details', query: {id: id}});
             }
         },
     }
@@ -414,6 +493,62 @@
         display: flex;
         flex-direction: column;
         align-items: center;
+    }
+
+    .guess-container {
+        border-top: 10px solid #f6f6f6;
+        padding: 20px 50px;
+    }
+
+    .guess-title {
+        font-size: 20px;
+        font-weight: 600;
+        margin-bottom: 20px;
+    }
+
+    .guess-card {
+        border: 1px solid #eeeeee;
+        border-radius: 4px;
+        padding: 10px;
+        cursor: pointer;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        height: 230px;
+        transition: box-shadow 0.2s ease;
+    }
+
+    .guess-card:hover {
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.12);
+    }
+
+    .guess-card-title {
+        font-size: 16px;
+        font-weight: 500;
+        margin-top: 10px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        line-height: 1.4;
+    }
+
+    .guess-card-meta {
+        display: flex;
+        justify-content: space-between;
+        font-size: 12px;
+        color: #666666;
+        margin-top: 8px;
+    }
+
+    .guess-card-price {
+        color: #f56c6c;
+        font-weight: 600;
+    }
+
+    .guess-card-place {
+        color: #409eff;
     }
 
     .message-container {

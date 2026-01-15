@@ -2,6 +2,7 @@ package com.second.hand.trading.server.dao;
 
 import com.second.hand.trading.server.model.IdleItemModel;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
 
@@ -34,4 +35,17 @@ public interface IdleItemDao {
     int updateByPrimaryKey(IdleItemModel record);
 
     List<IdleItemModel> findIdleByList(List<Long> idList);
+
+    List<IdleItemModel> listHotItems(@Param("limit") int limit);
+
+    List<IdleItemModel> listLatestItems(@Param("limit") int limit);
+
+    List<IdleItemModel> listByCity(@Param("idlePlace") String idlePlace,
+                                   @Param("limit") int limit);
+
+    List<IdleItemModel> listSimilarItems(@Param("idleLabel") int idleLabel,
+                                         @Param("idleId") long idleId,
+                                         @Param("idlePlace") String idlePlace,
+                                         @Param("searchToken") String searchToken,
+                                         @Param("limit") int limit);
 }

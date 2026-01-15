@@ -265,6 +265,20 @@ const api = {
             params: query
         });
     },
+    getHomeRecommend(query) {
+        return request({
+            url: '/recommend/home',
+            method: 'get',
+            params: query
+        });
+    },
+    getContentRecommend(query) {
+        return request({
+            url: '/recommend/content',
+            method: 'get',
+            params: query
+        });
+    },
     getChatConversations() {
         return request({
             url: '/chat/conversations',
