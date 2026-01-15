@@ -86,7 +86,7 @@ public class AdminController {
 
     @GetMapping("idleList")
     public ResultVo idleList(HttpSession session,
-                             @RequestParam("status") @NotNull @NotEmpty Integer status,
+                             @RequestParam("status") @NotNull Integer status,
                              @RequestParam(value = "page",required = false) Integer page,
                              @RequestParam(value = "nums",required = false) Integer nums){
         if(session.getAttribute("admin")==null){
@@ -105,8 +105,8 @@ public class AdminController {
 
     @GetMapping("updateIdleStatus")
     public ResultVo updateIdleStatus(HttpSession session,
-                                     @RequestParam("id") @NotNull @NotEmpty Long id,
-                                     @RequestParam("status") @NotNull @NotEmpty Integer status
+                                     @RequestParam("id") @NotNull Long id,
+                                     @RequestParam("status") @NotNull Integer status
                                      ){
         if(session.getAttribute("admin")==null){
             return ResultVo.fail(ErrorMsg.COOKIE_ERROR);
@@ -140,7 +140,7 @@ public class AdminController {
 
     @GetMapping("deleteOrder")
     public ResultVo deleteOrder(HttpSession session,
-                              @RequestParam("id") @NotNull @NotEmpty Long id){
+                              @RequestParam("id") @NotNull Long id){
         if(session.getAttribute("admin")==null){
             return ResultVo.fail(ErrorMsg.COOKIE_ERROR);
         }
@@ -154,7 +154,7 @@ public class AdminController {
     public ResultVo userList(HttpSession session,
                              @RequestParam(value = "page",required = false) Integer page,
                              @RequestParam(value = "nums",required = false) Integer nums,
-                             @RequestParam("status") @NotNull @NotEmpty Integer status){
+                             @RequestParam("status") @NotNull Integer status){
         if(session.getAttribute("admin")==null){
             return ResultVo.fail(ErrorMsg.COOKIE_ERROR);
         }
@@ -171,8 +171,8 @@ public class AdminController {
 
     @GetMapping("updateUserStatus")
     public ResultVo updateUserStatus(HttpSession session,
-                                     @RequestParam("id") @NotNull @NotEmpty Long id,
-                                     @RequestParam("status") @NotNull @NotEmpty Integer status){
+                                     @RequestParam("id") @NotNull Long id,
+                                     @RequestParam("status") @NotNull Integer status){
         if(session.getAttribute("admin")==null){
             return ResultVo.fail(ErrorMsg.COOKIE_ERROR);
         }

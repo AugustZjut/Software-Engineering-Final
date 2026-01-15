@@ -61,7 +61,7 @@ services:
       # 自定义参数
       - baseUrl=/api
     volumes:
-      - ./user_data:/app/userFile
+      - ./Server/userFile:/app/userFile
 
   gateway:
     build:
